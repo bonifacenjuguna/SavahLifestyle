@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Quick Links — SavahLifestyle v6</title>
+<link rel="stylesheet" href="css/style.css"/>
+<script src="js/app.js" defer></script>
+<script src="js/localAuth.js" defer></script>
+<script src="js/nav.js" defer></script>
+<style>
+.link-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:0.85rem; }
+.link-card { display:flex; align-items:center; gap:0.85rem; padding:0.85rem 1rem; background:var(--card); border:1px solid var(--border); border-radius:var(--radius-sm); text-decoration:none; transition:var(--transition); color:var(--text); }
+.link-card:hover { border-color:var(--border-accent); transform:translateY(-2px); box-shadow:var(--glow); }
+.link-logo { width:36px; height:36px; border-radius:10px; background:var(--bg3); display:flex; align-items:center; justify-content:center; flex-shrink:0; overflow:hidden; }
+.link-logo img { width:24px; height:24px; object-fit:contain; }
+.link-name { font-family:var(--font-head); font-weight:700; font-size:0.88rem; }
+.link-url { font-size:0.7rem; color:var(--text-muted); margin-top:0.1rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.preset-section { margin-bottom:2rem; }
+.user-section { margin-bottom:2rem; }
+</style>
+</head>
+<body>
+<div id="page-loader"><div class="loader-logo"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>Savah<span>Lifestyle</span></div><div class="loader-bar-wrap"><div class="loader-bar"></div></div><div class="loader-text">Loading...</div></div>
+
+<div class="page"><div class="container">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Quick <span>Links</span></h1>
+      <p class="page-subtitle">Your personal internet launcher — most used sites + your custom links</p>
+    </div>
+    <button class="btn btn-primary" onclick="document.getElementById('link-modal').classList.add('open')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Add Link
+    </button>
+  </div>
+
+  <div class="preset-section">
+    <div class="section-head">
+      <div class="section-title"><span class="section-title-line"></span> Popular Sites</div>
+    </div>
+    <div class="link-grid" id="preset-grid"></div>
+  </div>
+
+  <div class="user-section">
+    <div class="section-head">
+      <div class="section-title"><span class="section-title-line"></span> My Links</div>
+    </div>
+    <div class="link-grid" id="user-grid"></div>
+  </div>
+</div></div>
+
+<div class="modal-overlay" id="link-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Add Quick Link</div>
+      <button class="btn btn-icon btn-secondary" onclick="document.getElementById('link-modal').classList.remove('open')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="form-group"><label class="form-label">Name</label><input class="form-input" type="text" id="lk-name" placeholder="e.g. My Blog"/></div>
+    <div class="form-group"><label class="form-label">URL</label><input class="form-input" type="url" id="lk-url" placeholder="https://..."/></div>
+    <div class="form-group"><label class="form-label">Category</label>
+      <select class="form-select" id="lk-cat">
+        <option value="work">Work</option><option value="social">Social</option>
+        <option value="finance">Finance</option><option value="tools">Tools</option><option value="other">Other</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:0.75rem;margin-top:1rem">
+      <button class="btn btn-secondary" style="flex:1" onclick="document.getElementById('link-modal').classList.remove('open')">Cancel</button>
+      <button class="btn btn-primary" style="flex:1" onclick="addLink()">Add Link</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Preset sites with real favicon URLs
+const PRESET_SITES = [
+  { name:'Google',       url:'https://google.com',         logo:'https://www.google.com/favicon.ico' },
+  { name:'Gmail',        url:'https://gmail.com',           logo:'https://ssl.gstatic.com/ui/v1/icons/mail/rfr/gmail.ico' },
+  { name:'YouTube',      url:'https://youtube.com',         logo:'https://www.youtube.com/favicon.ico' },
+  { name:'GitHub',       url:'https://github.com',          logo:'https://github.com/favicon.ico' },
+  { name:'WhatsApp',     url:'https://web.whatsapp.com',    logo:'https://web.whatsapp.com/favicon.ico' },
+  { name:'Twitter / X',  url:'https://x.com',               logo:'https://x.com/favicon.ico' },
+  { name:'Instagram',    url:'https://instagram.com',       logo:'https://www.instagram.com/favicon.ico' },
+  { name:'Facebook',     url:'https://facebook.com',        logo:'https://www.facebook.com/favicon.ico' },
+  { name:'Reddit',       url:'https://reddit.com',          logo:'https://www.reddit.com/favicon.ico' },
+  { name:'LinkedIn',     url:'https://linkedin.com',        logo:'https://www.linkedin.com/favicon.ico' },
+  { name:'Netflix',      url:'https://netflix.com',         logo:'https://www.netflix.com/favicon.ico' },
+  { name:'Spotify',      url:'https://open.spotify.com',    logo:'https://open.spotify.com/favicon.ico' },
+  { name:'Amazon',       url:'https://amazon.com',          logo:'https://www.amazon.com/favicon.ico' },
+  { name:'ChatGPT',      url:'https://chatgpt.com',         logo:'https://chatgpt.com/favicon.ico' },
+  { name:'Notion',       url:'https://notion.so',           logo:'https://www.notion.so/favicon.ico' },
+  { name:'Figma',        url:'https://figma.com',           logo:'https://www.figma.com/favicon.ico' },
+  { name:'Canva',        url:'https://canva.com',           logo:'https://www.canva.com/favicon.ico' },
+  { name:'Dropbox',      url:'https://dropbox.com',         logo:'https://www.dropbox.com/favicon.ico' },
+  { name:'Google Drive', url:'https://drive.google.com',    logo:'https://ssl.gstatic.com/docs/doclist/images/drive_2022q3_32dp.png' },
+  { name:'Stack Overflow',url:'https://stackoverflow.com',  logo:'https://stackoverflow.com/favicon.ico' },
+];
+
+let userLinks = JSON.parse(localStorage.getItem('savah:quicklinks6') || '[]');
+
+function renderPresets() {
+  document.getElementById('preset-grid').innerHTML = PRESET_SITES.map(s => `
+    <a href="${s.url}" target="_blank" rel="noopener" class="link-card">
+      <div class="link-logo"><img src="${s.logo}" alt="${s.name}" onerror="this.parentElement.innerHTML='<svg width=16 height=16 viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;var(--blue)&quot; stroke-width=&quot;2&quot;><path d=&quot;M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71&quot;/><path d=&quot;M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71&quot;/></svg>'"></div>
+      <div style="min-width:0">
+        <div class="link-name">${s.name}</div>
+        <div class="link-url">${s.url.replace(/^https?:\/\//,'')}</div>
+      </div>
+    </a>`).join('');
+}
+
+function renderUser() {
+  const grid = document.getElementById('user-grid');
+  if (!userLinks.length) {
+    grid.innerHTML = '<p style="color:var(--text-muted);font-size:0.88rem;padding:1rem 0">No custom links yet. Add your favorites above.</p>';
+    return;
+  }
+  grid.innerHTML = userLinks.map(l => `
+    <div class="link-card" style="position:relative">
+      <a href="${l.url}" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:0.85rem;text-decoration:none;color:var(--text);flex:1;min-width:0">
+        <div class="link-logo">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        </div>
+        <div style="min-width:0">
+          <div class="link-name">${l.name}</div>
+          <div class="link-url">${l.url.replace(/^https?:\/\//,'')}</div>
+        </div>
+      </a>
+      <button onclick="deleteLink(${l.id})" style="background:none;border:none;cursor:pointer;padding:0.25rem;border-radius:6px;opacity:0.4;transition:opacity 0.15s" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.4">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>`).join('');
+}
+
+function addLink() {
+  const name = document.getElementById('lk-name').value.trim();
+  const url  = document.getElementById('lk-url').value.trim();
+  if (!name || !url) { Toast.show('Enter name and URL', 'warning'); return; }
+  userLinks.push({ id:Date.now(), name, url, cat:document.getElementById('lk-cat').value });
+  localStorage.setItem('savah:quicklinks6', JSON.stringify(userLinks));
+  renderUser();
+  document.getElementById('link-modal').classList.remove('open');
+  document.getElementById('lk-name').value = '';
+  document.getElementById('lk-url').value  = '';
+  Toast.show('Link added!', 'success');
+}
+
+function deleteLink(id) {
+  userLinks = userLinks.filter(l => l.id !== id);
+  localStorage.setItem('savah:quicklinks6', JSON.stringify(userLinks));
+  renderUser();
+  Toast.show('Link removed', 'info');
+}
+
+renderPresets();
+renderUser();
+</script>
+</body></html>

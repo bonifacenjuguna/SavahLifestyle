@@ -1,0 +1,17 @@
+{
+  "_id": "7399adb73d16cff863f70c32",
+  "name": "Boniface Njuguna",
+  "email": "njugunaboniface211@gmail.com",
+  "username": "njugunaboniface211",
+  "password_hash": "c0297ad1d0e8c7d2f6c6eec1b7b5a3eb505cfdc31f96e9c0d0d6b0d597d96bd0",
+  "password_salt": "savah_salt_7399adb73d16",
+  "isAdmin": true,
+  "provider": "local",
+  "createdAt": "2026-03-12T22:28:26.946Z",
+  "lastSeen": "2026-03-12T22:28:26.946Z",
+  "tasksCompleted": 0,
+  "focusMinutes": 0,
+  "habitsStreak": 0,
+  "notesCount": 0,
+  "totalExpenses": 0
+}

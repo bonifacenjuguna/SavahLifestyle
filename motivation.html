@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Daily Motivation — SavahLifestyle</title>
+  <link rel="stylesheet" href="css/style.css"/>
+  <script src="js/app.js" defer></script>
+  <script src="js/localAuth.js" defer></script>
+<script src="js/nav.js" defer></script>
+  
+  
+  <style>
+    .quote-card { min-height:280px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; position:relative; overflow:hidden; }
+    .quote-mark { font-size:8rem; line-height:1; color:var(--blue-dim); position:absolute; top:-1rem; left:1rem; font-family:Georgia,serif; pointer-events:none; }
+    .quote-text { font-family:var(--font-head); font-size:clamp(1.1rem,3vw,1.6rem); font-weight:700; color:var(--text); line-height:1.4; max-width:700px; position:relative; z-index:1; }
+    .quote-author { font-size:0.9rem; color:var(--text-muted); margin-top:1.25rem; font-style:italic; }
+    .quote-category { display:inline-flex; align-items:center; gap:0.3rem; padding:0.2rem 0.7rem; background:var(--blue-dim); border:1px solid var(--border-accent); border-radius:999px; font-size:0.72rem; color:var(--blue); font-weight:600; margin-bottom:1rem; }
+  </style>
+</head>
+<body>
+<nav class="nav">
+  <a href="index.html" class="nav-logo"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>Savah<span>Lifestyle</span></a>
+  <div class="nav-actions">
+    <a href="index.html" class="nav-back"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg> <span>Dashboard</span></a>
+    <button class="theme-toggle" id="theme-toggle"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/></svg></button>
+  </div>
+</nav>
+<div class="page"><div class="container-sm">
+  <div class="page-header"><div><h1 class="page-title">Daily <span>Motivation</span></h1><p class="page-subtitle">Fuel your mindset with powerful quotes</p></div></div>
+
+  <div class="tabs" style="max-width:500px;margin-bottom:1.5rem" id="cat-tabs">
+    <button class="tab active" onclick="setQCat('all',this)">All</button>
+    <button class="tab" onclick="setQCat('success',this)">Success</button>
+    <button class="tab" onclick="setQCat('mindset',this)">Mindset</button>
+    <button class="tab" onclick="setQCat('resilience',this)">Resilience</button>
+    <button class="tab" onclick="setQCat('focus',this)">Focus</button>
+  </div>
+
+  <div class="card card-gold quote-card" id="quote-card">
+    <div class="quote-mark">"</div>
+    <div class="quote-category" id="q-cat">Loading...</div>
+    <div class="quote-text" id="q-text">Loading your daily motivation...</div>
+    <div class="quote-author" id="q-author">— SavahLifestyle</div>
+  </div>
+
+  <div style="display:flex;justify-content:center;gap:0.75rem;margin-top:1.5rem;flex-wrap:wrap">
+    <button class="btn btn-primary" onclick="nextQuote()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
+      New Quote
+    </button>
+    <button class="btn btn-secondary" onclick="copyQuote()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+      Copy
+    </button>
+    <button class="btn btn-secondary" onclick="toggleFavorite()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="fav-icon"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      Favorite
+    </button>
+  </div>
+
+  <div class="section" style="margin-top:2.5rem">
+    <div class="section-title">Saved Favorites</div>
+    <div id="favorites-list"></div>
+  </div>
+</div></div>
+<script>
+const quotes = [
+  {text:"The secret of getting ahead is getting started.",author:"Mark Twain",cat:"success"},
+  {text:"It always seems impossible until it's done.",author:"Nelson Mandela",cat:"resilience"},
+  {text:"Don't watch the clock; do what it does. Keep going.",author:"Sam Levenson",cat:"focus"},
+  {text:"Believe you can and you're halfway there.",author:"Theodore Roosevelt",cat:"mindset"},
+  {text:"Success is not final, failure is not fatal: it is the courage to continue that counts.",author:"Winston Churchill",cat:"resilience"},
+  {text:"The only way to do great work is to love what you do.",author:"Steve Jobs",cat:"success"},
+  {text:"In the middle of every difficulty lies opportunity.",author:"Albert Einstein",cat:"mindset"},
+  {text:"It does not matter how slowly you go as long as you do not stop.",author:"Confucius",cat:"focus"},
+  {text:"Life is what happens when you're busy making other plans.",author:"John Lennon",cat:"mindset"},
+  {text:"The future belongs to those who believe in the beauty of their dreams.",author:"Eleanor Roosevelt",cat:"success"},
+  {text:"Hardships often prepare ordinary people for an extraordinary destiny.",author:"C.S. Lewis",cat:"resilience"},
+  {text:"You are never too old to set another goal or to dream a new dream.",author:"C.S. Lewis",cat:"success"},
+  {text:"Try not to become a man of success. Rather become a man of value.",author:"Albert Einstein",cat:"success"},
+  {text:"The mind is everything. What you think you become.",author:"Buddha",cat:"mindset"},
+  {text:"An unexamined life is not worth living.",author:"Socrates",cat:"mindset"},
+  {text:"Spread love everywhere you go. Let no one ever come to you without leaving happier.",author:"Mother Teresa",cat:"mindset"},
+  {text:"When you reach the end of your rope, tie a knot in it and hang on.",author:"Franklin D. Roosevelt",cat:"resilience"},
+  {text:"Always remember that you are absolutely unique. Just like everyone else.",author:"Margaret Mead",cat:"mindset"},
+  {text:"Do not go where the path may lead, go instead where there is no path and leave a trail.",author:"Ralph Waldo Emerson",cat:"success"},
+  {text:"You will face many defeats in life, but never let yourself be defeated.",author:"Maya Angelou",cat:"resilience"},
+  {text:"The greatest glory in living lies not in never falling, but in rising every time we fall.",author:"Nelson Mandela",cat:"resilience"},
+  {text:"In the end, it's not the years in your life that count. It's the life in your years.",author:"Abraham Lincoln",cat:"focus"},
+  {text:"Concentrate all your thoughts upon the work in hand. The sun's rays do not burn until brought to a focus.",author:"Alexander Graham Bell",cat:"focus"},
+  {text:"Either you run the day or the day runs you.",author:"Jim Rohn",cat:"focus"},
+  {text:"I am not a product of my circumstances. I am a product of my decisions.",author:"Stephen Covey",cat:"mindset"},
+];
+let currentIdx = 0, currentCat = 'all', favorites = JSON.parse(localStorage.getItem('savah:fav-quotes')||'[]');
+
+function setQCat(cat,btn) {
+  currentCat=cat;
+  document.querySelectorAll('#cat-tabs .tab').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
+  nextQuote();
+}
+
+function getFiltered() { return currentCat==='all' ? quotes : quotes.filter(q=>q.cat===currentCat); }
+
+function nextQuote() {
+  const filtered = getFiltered();
+  currentIdx = (currentIdx+1) % filtered.length;
+  const q = filtered[currentIdx];
+  const card = document.getElementById('quote-card');
+  card.style.opacity='0'; card.style.transform='translateY(10px)';
+  setTimeout(() => {
+    document.getElementById('q-text').textContent = q.text;
+    document.getElementById('q-author').textContent = '— '+q.author;
+    document.getElementById('q-cat').textContent = q.cat.charAt(0).toUpperCase()+q.cat.slice(1);
+    const isFav = favorites.some(f=>f.text===q.text);
+    document.getElementById('fav-icon').setAttribute('fill', isFav ? 'var(--blue)' : 'none');
+    card.style.opacity='1'; card.style.transform='translateY(0)';
+  }, 200);
+  card.style.transition='all 0.3s ease';
+}
+
+function copyQuote() {
+  const text = document.getElementById('q-text').textContent;
+  const author = document.getElementById('q-author').textContent;
+  navigator.clipboard.writeText(`"${text}" ${author}`).then(()=>Toast.show('Copied to clipboard!','success'));
+}
+
+function toggleFavorite() {
+  const text = document.getElementById('q-text').textContent;
+  const author = document.getElementById('q-author').textContent;
+  const idx = favorites.findIndex(f=>f.text===text);
+  if(idx>-1) { favorites.splice(idx,1); Toast.show('Removed from favorites','info'); document.getElementById('fav-icon').setAttribute('fill','none'); }
+  else { favorites.push({text,author}); Toast.show('Added to favorites <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>','success'); document.getElementById('fav-icon').setAttribute('fill','var(--blue)'); }
+  localStorage.setItem('savah:fav-quotes',JSON.stringify(favorites));
+  renderFavorites();
+}
+
+function renderFavorites() {
+  if(!favorites.length) { document.getElementById('favorites-list').innerHTML='<div style="color:var(--text-muted);font-size:0.85rem">No favorites yet — star quotes you love!</div>'; return; }
+  document.getElementById('favorites-list').innerHTML = favorites.map((f,i)=>`
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.85rem 1rem;margin-bottom:0.5rem;display:flex;gap:0.75rem;align-items:flex-start">
+      <div style="color:var(--blue);font-size:1.1rem;flex-shrink:0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+      <div style="flex:1"><div style="font-size:0.88rem;color:var(--text);font-style:italic">"${f.text}"</div><div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.3rem">${f.author}</div></div>
+      <button class="btn-icon btn" onclick="favorites.splice(${i},1);localStorage.setItem('savah:fav-quotes',JSON.stringify(favorites));renderFavorites()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+  `).join('');
+}
+// Show random quote on load
+currentIdx = Math.floor(Math.random()*quotes.length);
+const q = quotes[currentIdx];
+document.getElementById('q-text').textContent = q.text;
+document.getElementById('q-author').textContent = '— '+q.author;
+document.getElementById('q-cat').textContent = q.cat.charAt(0).toUpperCase()+q.cat.slice(1);
+renderFavorites();
+</script>
+</body></html>

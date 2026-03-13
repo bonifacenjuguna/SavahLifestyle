@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Countdown Timer — SavahLifestyle</title>
+  <link rel="stylesheet" href="css/style.css"/>
+  <script src="js/app.js" defer></script>
+  <script src="js/localAuth.js" defer></script>
+<script src="js/nav.js" defer></script>
+  
+  
+  <style>
+    .countdown-card { background:linear-gradient(135deg,var(--card),var(--bg3)); border:1px solid var(--border-accent); border-radius:var(--radius-lg); padding:2rem; text-align:center; margin-bottom:1.5rem; }
+    .countdown-name { font-family:var(--font-head); font-size:1.1rem; font-weight:700; color:var(--text-muted); margin-bottom:1rem; }
+    .countdown-digits { display:flex; justify-content:center; gap:1rem; flex-wrap:wrap; }
+    .cd-unit { display:flex; flex-direction:column; align-items:center; }
+    .cd-value { font-family:var(--font-head); font-size:3rem; font-weight:800; color:var(--blue); line-height:1; min-width:70px; }
+    .cd-label { font-size:0.65rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.1em; margin-top:0.3rem; }
+    .cd-sep { font-family:var(--font-head); font-size:2.5rem; font-weight:800; color:var(--border); align-self:center; }
+    .event-item { display:flex; align-items:center; gap:0.75rem; padding:0.85rem 1rem; background:var(--card); border:1px solid var(--border); border-radius:var(--radius-sm); margin-bottom:0.5rem; cursor:pointer; transition:var(--transition); }
+    .event-item:hover, .event-item.active { border-color:var(--border-accent); }
+    .event-item.active .event-name { color:var(--blue); }
+    .event-emoji { font-size:1.3rem; }
+    .event-info { flex:1; }
+    .event-name { font-weight:600; font-size:0.9rem; color:var(--text); }
+    .event-date { font-size:0.75rem; color:var(--text-muted); }
+  </style>
+</head>
+<body>
+<nav class="nav">
+  <a href="index.html" class="nav-logo"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>Savah<span>Lifestyle</span></a>
+  <div class="nav-actions">
+    <a href="index.html" class="nav-back"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg> <span>Dashboard</span></a>
+    <button class="theme-toggle" id="theme-toggle"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/></svg></button>
+  </div>
+</nav>
+<div class="page"><div class="container-sm">
+  <div class="page-header">
+    <div><h1 class="page-title">Countdown <span>Timer</span></h1><p class="page-subtitle">Track time until your most important events</p></div>
+    <button class="btn btn-primary" onclick="openModal('event-modal')">+ Add Event</button>
+  </div>
+
+  <!-- Active countdown display -->
+  <div class="countdown-card" id="countdown-display">
+    <div class="countdown-name" id="cd-name">Select an event below</div>
+    <div class="countdown-digits" id="cd-digits">
+      <div class="cd-unit"><div class="cd-value" id="cd-days">—</div><div class="cd-label">Days</div></div>
+      <div class="cd-sep">:</div>
+      <div class="cd-unit"><div class="cd-value" id="cd-hours">—</div><div class="cd-label">Hours</div></div>
+      <div class="cd-sep">:</div>
+      <div class="cd-unit"><div class="cd-value" id="cd-mins">—</div><div class="cd-label">Minutes</div></div>
+      <div class="cd-sep">:</div>
+      <div class="cd-unit"><div class="cd-value" id="cd-secs">—</div><div class="cd-label">Seconds</div></div>
+    </div>
+  </div>
+
+  <div id="events-list"></div>
+</div></div>
+
+<div class="modal-overlay" id="event-modal">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">New Event</div><button class="btn-icon btn" onclick="closeModal('event-modal')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <div class="form-group"><label class="form-label">Event Name</label><input type="text" id="ev-name" placeholder="e.g. My Birthday" /></div>
+    <div class="form-group"><label class="form-label">Emoji</label><input type="text" id="ev-emoji" placeholder="<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><path d="M20.2 7.8l-7.7 7.7-4-4-5.7 5.7"/><path d="M15 7h5v5"/></svg>" maxlength="2" style="font-size:1.2rem" /></div>
+    <div class="form-group"><label class="form-label">Date & Time</label><input type="datetime-local" id="ev-datetime" /></div>
+    <div style="display:flex;gap:0.75rem;margin-top:1rem">
+      <button class="btn btn-secondary" style="flex:1" onclick="closeModal('event-modal')">Cancel</button>
+      <button class="btn btn-primary" style="flex:1" onclick="addEvent()">Add Event</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let events = JSON.parse(localStorage.getItem('savah:countdowns') || '[]');
+let activeId = null;
+let tickInterval;
+
+// Set default datetime to tomorrow
+const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate()+1);
+document.getElementById('ev-datetime').value = tomorrow.toISOString().slice(0,16);
+
+function addEvent() {
+  const name = document.getElementById('ev-name').value.trim();
+  const dt = document.getElementById('ev-datetime').value;
+  if(!name||!dt) { Toast.show('Fill all fields','warning'); return; }
+  const ev = { id:Date.now(), name, emoji:document.getElementById('ev-emoji').value||'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><path d="M5 3h14"/><path d="M5 21h14"/><path d="M5 3v4l7 5-7 5v4"/><path d="M19 3v4l-7 5 7 5v4"/></svg>', datetime:dt };
+  events.push(ev);
+  save();
+  closeModal('event-modal');
+  document.getElementById('ev-name').value = '';
+  selectEvent(ev.id);
+  Toast.show('Event added!','success');
+}
+
+function selectEvent(id) {
+  activeId = id;
+  clearInterval(tickInterval);
+  tickInterval = setInterval(tick, 1000);
+  tick();
+  render();
+}
+
+function tick() {
+  const ev = events.find(e => e.id === activeId);
+  if(!ev) return;
+  const diff = new Date(ev.datetime) - new Date();
+  if(diff <= 0) {
+    document.getElementById('cd-name').textContent = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><path d="M20.2 7.8l-7.7 7.7-4-4-5.7 5.7"/><path d="M15 7h5v5"/></svg> ${ev.name} — It\'s here!`;
+    ['cd-days','cd-hours','cd-mins','cd-secs'].forEach(id => document.getElementById(id).textContent = '00');
+    clearInterval(tickInterval);
+    return;
+  }
+  const days = Math.floor(diff/86400000);
+  const hours = Math.floor((diff%86400000)/3600000);
+  const mins = Math.floor((diff%3600000)/60000);
+  const secs = Math.floor((diff%60000)/1000);
+  document.getElementById('cd-name').textContent = `${ev.emoji} ${ev.name}`;
+  document.getElementById('cd-days').textContent = String(days).padStart(2,'0');
+  document.getElementById('cd-hours').textContent = String(hours).padStart(2,'0');
+  document.getElementById('cd-mins').textContent = String(mins).padStart(2,'0');
+  document.getElementById('cd-secs').textContent = String(secs).padStart(2,'0');
+}
+
+function deleteEvent(id, e) {
+  e.stopPropagation();
+  events = events.filter(ev => ev.id !== id);
+  if(activeId === id) { activeId = null; clearInterval(tickInterval); ['cd-days','cd-hours','cd-mins','cd-secs'].forEach(i => document.getElementById(i).textContent='—'); document.getElementById('cd-name').textContent='Select an event below'; }
+  save();
+}
+
+function save() { localStorage.setItem('savah:countdowns', JSON.stringify(events)); render(); }
+
+function render() {
+  if(!events.length) {
+    document.getElementById('events-list').innerHTML = '<div class="empty-state"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><h3>No events yet</h3><p>Add an event to start counting down.</p></div>';
+    return;
+  }
+  document.getElementById('events-list').innerHTML = events.map(ev => `
+    <div class="event-item ${activeId===ev.id?'active':''}" onclick="selectEvent(${ev.id})">
+      <div class="event-emoji">${ev.emoji}</div>
+      <div class="event-info">
+        <div class="event-name">${ev.name}</div>
+        <div class="event-date">${new Date(ev.datetime).toLocaleString('en-US',{dateStyle:'medium',timeStyle:'short'})}</div>
+      </div>
+      <button class="btn-icon btn" onclick="deleteEvent(${ev.id},event)" style="opacity:0.5" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+      </button>
+    </div>
+  `).join('');
+}
+render();
+if(events.length) selectEvent(events[0].id);
+</script>
+</body></html>

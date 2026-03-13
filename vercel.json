@@ -1,0 +1,25 @@
+{
+  "version": 2,
+  "rewrites": [
+    { "source": "/api/auth/register",        "destination": "/api/auth/register"        },
+    { "source": "/api/auth/login",           "destination": "/api/auth/login"           },
+    { "source": "/api/auth/me",              "destination": "/api/auth/me"              },
+    { "source": "/api/data",                 "destination": "/api/data/index"           },
+    { "source": "/api/data/:key",            "destination": "/api/data/index"           },
+    { "source": "/api/notifications",        "destination": "/api/notifications/index"  },
+    { "source": "/api/notifications/:path*", "destination": "/api/notifications/index"  },
+    { "source": "/api/files",                "destination": "/api/files/index"          },
+    { "source": "/api/files/:path*",         "destination": "/api/files/index"          },
+    { "source": "/api/admin/:path*",         "destination": "/api/admin/index"          }
+  ],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin",  "value": "*" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET,POST,PUT,DELETE,OPTIONS" },
+        { "key": "Access-Control-Allow-Headers", "value": "Content-Type,Authorization" }
+      ]
+    }
+  ]
+}

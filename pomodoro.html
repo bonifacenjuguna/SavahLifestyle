@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Pomodoro Timer — SavahLifestyle v6</title>
+<link rel="stylesheet" href="css/style.css"/>
+<script src="js/app.js" defer></script>
+<script src="js/localAuth.js" defer></script>
+<script src="js/nav.js" defer></script>
+<style>
+.pomo-ring-wrap { display:flex; flex-direction:column; align-items:center; margin:2rem 0; }
+.pomo-svg { width:240px; height:240px; transform:rotate(-90deg); }
+.pomo-bg { fill:none; stroke:var(--border); stroke-width:10; }
+.pomo-arc { fill:none; stroke-width:10; stroke-linecap:round; transition:stroke-dashoffset 1s linear, stroke 0.4s; }
+.pomo-inner { position:absolute; display:flex; flex-direction:column; align-items:center; justify-content:center; width:240px; height:240px; }
+.pomo-ring-outer { position:relative; width:240px; height:240px; }
+.pomo-time { font-family:var(--font-mono); font-size:3.5rem; font-weight:700; }
+.pomo-mode-label { font-size:0.82rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.1em; margin-top:0.25rem; }
+.pomo-controls { display:flex; gap:1rem; margin-top:1.5rem; justify-content:center; }
+.pomo-session { width:12px; height:12px; border-radius:50%; background:var(--border); transition:var(--transition); }
+.pomo-session.done { background:var(--red); }
+.pomo-session.active { background:var(--blue); animation:pulse 1s ease infinite; }
+@keyframes pulse { 0%,100%{transform:scale(1);} 50%{transform:scale(1.3);} }
+.pomo-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; max-width:460px; margin:0 auto 2rem; }
+.pomo-stat { text-align:center; background:var(--card); border:1px solid var(--glass-border); border-radius:var(--radius); padding:1rem; }
+.pomo-stat-val { font-family:var(--font-head); font-size:1.5rem; font-weight:800; }
+.pomo-stat-label { font-size:0.72rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; margin-top:0.2rem; }
+</style>
+</head>
+<body>
+<div id="page-loader"><div class="loader-logo"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>Savah<span>Lifestyle</span></div><div class="loader-bar-wrap"><div class="loader-bar"></div></div></div>
+
+<div class="page"><div class="container" style="max-width:640px;padding-bottom:3rem">
+  <div class="page-header">
+    <div><h1 class="page-title">Pomodoro <span>Timer</span></h1><p class="page-subtitle">Focus in sprints, rest with intention</p></div>
+    <a href="index.html" class="nav-back"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg> Back</a>
+  </div>
+
+  <!-- Mode tabs -->
+  <div class="tabs" style="max-width:360px;margin:0 auto 1.5rem">
+    <button class="tab active" id="mode-focus"  onclick="setMode('focus')">Focus</button>
+    <button class="tab" id="mode-short"  onclick="setMode('short')">Short Break</button>
+    <button class="tab" id="mode-long"   onclick="setMode('long')">Long Break</button>
+  </div>
+
+  <!-- Ring -->
+  <div class="pomo-ring-wrap">
+    <div class="pomo-ring-outer">
+      <svg class="pomo-svg" viewBox="0 0 100 100">
+        <circle class="pomo-bg" cx="50" cy="50" r="45"/>
+        <circle class="pomo-arc" id="pomo-arc" cx="50" cy="50" r="45" stroke="var(--red)"/>
+      </svg>
+      <div class="pomo-inner">
+        <div class="pomo-time" id="pomo-time">25:00</div>
+        <div class="pomo-mode-label" id="pomo-mode-lbl">Focus Time</div>
+      </div>
+    </div>
+    <!-- Session dots -->
+    <div style="display:flex;gap:0.5rem;margin-top:1.25rem" id="session-dots"></div>
+    <!-- Controls -->
+    <div class="pomo-controls">
+      <button class="btn btn-secondary" onclick="resetTimer()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.51"/></svg>
+        Reset
+      </button>
+      <button class="btn btn-red" id="pomo-start-btn" onclick="toggleTimer()" style="min-width:100px">
+        <svg width="16" height="16" id="pomo-start-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        Start
+      </button>
+      <button class="btn btn-secondary" onclick="skipSession()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
+        Skip
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="pomo-stats">
+    <div class="pomo-stat">
+      <div class="pomo-stat-val gradient-text-red" id="stat-today">0</div>
+      <div class="pomo-stat-label">Today</div>
+    </div>
+    <div class="pomo-stat">
+      <div class="pomo-stat-val gradient-text-blue" id="stat-total">0</div>
+      <div class="pomo-stat-label">Total</div>
+    </div>
+    <div class="pomo-stat">
+      <div class="pomo-stat-val gradient-text-green" id="stat-mins">0</div>
+      <div class="pomo-stat-label">Focus Mins</div>
+    </div>
+  </div>
+
+  <!-- Settings card -->
+  <div class="card card-p">
+    <div class="card-title">Timer Settings</div>
+    <div class="grid-3" style="gap:1rem">
+      <div class="form-group"><label class="form-label">Focus (min)</label><input class="form-input" type="number" id="set-focus" value="25" min="1" max="60"/></div>
+      <div class="form-group"><label class="form-label">Short Break</label><input class="form-input" type="number" id="set-short" value="5" min="1" max="30"/></div>
+      <div class="form-group"><label class="form-label">Long Break</label><input class="form-input" type="number" id="set-long" value="15" min="5" max="60"/></div>
+    </div>
+    <div class="setting-row" style="padding:0.75rem 0 0">
+      <div><div class="setting-label">Auto-start breaks</div></div>
+      <label class="switch"><div class="switch-track" id="sw-auto" onclick="this.classList.toggle('on')"><div class="switch-knob"></div></div></label>
+    </div>
+    <button class="btn btn-secondary btn-sm" style="margin-top:0.75rem" onclick="applySettings()">Apply Settings</button>
+  </div>
+</div></div>
+
+<script>
+const MODES = {
+  focus: { label:'Focus Time',   color:'var(--red)',  mins:25 },
+  short: { label:'Short Break',  color:'var(--green)',mins:5  },
+  long:  { label:'Long Break',   color:'var(--blue)', mins:15 },
+};
+
+let mode = 'focus', totalSecs = 25*60, remaining = 25*60;
+let running = false, interval = null, sessionCount = 0, completedToday = 0, totalCompleted = 0;
+const CIRC = 2 * Math.PI * 45;
+
+const arc    = document.getElementById('pomo-arc');
+const timeEl = document.getElementById('pomo-time');
+const lblEl  = document.getElementById('pomo-mode-lbl');
+const startBtn = document.getElementById('pomo-start-btn');
+
+function loadStats() {
+  const s = JSON.parse(localStorage.getItem('savah:pomodoro') || '{"today":0,"total":0,"date":""}');
+  const today = new Date().toDateString();
+  if (s.date !== today) { s.today = 0; s.date = today; }
+  completedToday = s.today;
+  totalCompleted = s.total;
+  updateStats();
+}
+
+function saveStats() {
+  const today = new Date().toDateString();
+  localStorage.setItem('savah:pomodoro', JSON.stringify({ today:completedToday, total:totalCompleted, date:today }));
+}
+
+function updateStats() {
+  document.getElementById('stat-today').textContent = completedToday;
+  document.getElementById('stat-total').textContent = totalCompleted;
+  document.getElementById('stat-mins').textContent  = totalCompleted * parseInt(document.getElementById('set-focus').value || 25);
+}
+
+function setMode(m) {
+  mode = m;
+  document.querySelectorAll('[id^="mode-"]').forEach(b => b.classList.remove('active'));
+  document.getElementById('mode-' + m).classList.add('active');
+  const mins = parseInt(document.getElementById(m === 'focus' ? 'set-focus' : m === 'short' ? 'set-short' : 'set-long').value);
+  totalSecs = mins * 60;
+  remaining = totalSecs;
+  running = false;
+  clearInterval(interval);
+  updateDisplay();
+  updateBtn(false);
+}
+
+function updateDisplay() {
+  const m = MODES[mode];
+  const mm = String(Math.floor(remaining / 60)).padStart(2,'0');
+  const ss = String(remaining % 60).padStart(2,'0');
+  timeEl.textContent = `${mm}:${ss}`;
+  lblEl.textContent  = m.label;
+  arc.style.stroke   = m.color;
+  const pct = totalSecs > 0 ? remaining / totalSecs : 1;
+  arc.style.strokeDasharray  = CIRC;
+  arc.style.strokeDashoffset = CIRC * (1 - pct);
+  document.title = running ? `${mm}:${ss} — ${m.label}` : 'Pomodoro — SavahLifestyle';
+}
+
+function toggleTimer() {
+  running = !running;
+  if (running) {
+    interval = setInterval(tick, 1000);
+  } else {
+    clearInterval(interval);
+  }
+  updateBtn(running);
+}
+
+function tick() {
+  if (remaining <= 0) {
+    clearInterval(interval);
+    running = false;
+    if (mode === 'focus') { completedToday++; totalCompleted++; saveStats(); updateStats(); }
+    sessionCount++;
+    updateDots();
+    Toast.show(mode === 'focus' ? 'Focus session complete! Take a break.' : 'Break over! Back to focus.', 'success', 4000);
+    updateBtn(false);
+    // Auto-advance
+    if (document.getElementById('sw-auto').classList.contains('on')) {
+      setTimeout(() => { setMode(mode === 'focus' ? (sessionCount % 4 === 0 ? 'long' : 'short') : 'focus'); toggleTimer(); }, 1500);
+    }
+    return;
+  }
+  remaining--;
+  updateDisplay();
+}
+
+function updateBtn(r) {
+  startBtn.innerHTML = r
+    ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> Pause`
+    : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg> ${remaining < totalSecs && remaining > 0 ? 'Resume' : 'Start'}`;
+}
+
+function resetTimer() {
+  clearInterval(interval); running = false;
+  const mins = parseInt(document.getElementById(mode === 'focus' ? 'set-focus' : mode === 'short' ? 'set-short' : 'set-long').value);
+  totalSecs = mins * 60; remaining = totalSecs;
+  updateDisplay(); updateBtn(false);
+  document.title = 'Pomodoro — SavahLifestyle';
+}
+
+function skipSession() {
+  clearInterval(interval); running = false;
+  remaining = 0; updateDisplay(); updateBtn(false);
+  Toast.show('Session skipped', 'info', 1500);
+}
+
+function updateDots() {
+  const dots = document.getElementById('session-dots');
+  const total = 4;
+  dots.innerHTML = Array.from({length:total}).map((_,i) => {
+    const cls = i < sessionCount % total ? 'done' : i === sessionCount % total - 1 && running ? 'active' : '';
+    return `<div class="pomo-session ${cls}"></div>`;
+  }).join('');
+}
+
+function applySettings() { setMode(mode); Toast.show('Settings applied', 'success', 1500); }
+
+loadStats();
+updateDisplay();
+updateDots();
+arc.style.strokeDasharray  = CIRC;
+arc.style.strokeDashoffset = CIRC;
+</script>
+</body></html>

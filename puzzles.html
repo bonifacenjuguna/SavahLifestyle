@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Games & Puzzles — SavahLifestyle v6</title>
+<link rel="stylesheet" href="css/style.css"/>
+<script src="js/app.js" defer></script>
+<script src="js/localAuth.js" defer></script>
+<script src="js/nav.js" defer></script>
+<style>
+.game-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:1rem; }
+.game-card { background:var(--card); border:1px solid var(--glass-border); border-radius:var(--radius); overflow:hidden; transition:var(--transition); }
+[data-theme="light"] .game-card { background:rgba(255,255,255,0.7); border:1px solid rgba(59,130,246,0.1); }
+.game-card:hover { border-color:var(--border-accent); transform:translateY(-3px); }
+.game-header { padding:1.25rem; display:flex; align-items:center; gap:0.85rem; border-bottom:1px solid var(--border); }
+.game-icon { width:46px; height:46px; border-radius:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.game-name { font-family:var(--font-head); font-weight:700; font-size:1rem; }
+.game-desc { font-size:0.78rem; color:var(--text-muted); margin-top:0.15rem; }
+.game-body { padding:1.25rem; }
+
+/* Snake */
+#snake-canvas { display:block; border-radius:var(--radius-sm); background:var(--bg3); }
+[data-theme="light"] #snake-canvas { background:#f0f4ff; }
+
+/* Wordle */
+.wordle-grid { display:grid; grid-template-rows:repeat(6,1fr); gap:4px; max-width:230px; margin:0 auto 0.75rem; }
+.wordle-row { display:grid; grid-template-columns:repeat(5,1fr); gap:4px; }
+.wordle-cell { aspect-ratio:1; border:2px solid var(--border); border-radius:6px; display:flex; align-items:center; justify-content:center; font-family:var(--font-head); font-size:1rem; font-weight:800; text-transform:uppercase; transition:var(--transition); }
+.wordle-cell.filled { border-color:var(--text-muted); }
+.wordle-cell.correct { background:var(--green); border-color:var(--green); color:#fff; }
+.wordle-cell.present { background:var(--warning); border-color:var(--warning); color:#fff; }
+.wordle-cell.absent  { background:var(--bg3);  border-color:var(--bg3);  color:var(--text-muted); }
+.wordle-kb { display:flex; flex-direction:column; gap:4px; }
+.wordle-kb-row { display:flex; gap:4px; justify-content:center; }
+.wk { min-width:28px; height:32px; padding:0 4px; border-radius:5px; background:var(--bg3); border:none; color:var(--text); font-family:var(--font-head); font-size:0.7rem; font-weight:700; cursor:pointer; transition:var(--transition); }
+.wk:hover { background:var(--border-accent); }
+.wk.correct { background:var(--green); color:#fff; }
+.wk.present { background:var(--warning); color:#fff; }
+.wk.absent  { background:var(--text-dim); color:var(--text-muted); }
+
+/* 2048 */
+.g2048-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; background:var(--bg3); border-radius:var(--radius-sm); padding:6px; max-width:240px; margin:0 auto; }
+.g2048-cell { aspect-ratio:1; border-radius:6px; display:flex; align-items:center; justify-content:center; font-family:var(--font-head); font-size:0.85rem; font-weight:800; transition:var(--transition); background:var(--border); color:var(--text); }
+
+/* Memory */
+.memory-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; max-width:260px; margin:0 auto; }
+.memory-card { aspect-ratio:1; border-radius:8px; cursor:pointer; position:relative; transform-style:preserve-3d; transition:transform 0.4s; }
+.memory-card.flipped { transform:rotateY(180deg); }
+.memory-face { position:absolute; inset:0; border-radius:8px; display:flex; align-items:center; justify-content:center; backface-visibility:hidden; font-size:1.3rem; }
+.memory-front { background:linear-gradient(135deg,var(--blue),var(--purple)); }
+.memory-back  { background:var(--bg3); transform:rotateY(180deg); border:1px solid var(--border); }
+
+/* Trivia */
+.trivia-opt { width:100%; text-align:left; padding:0.65rem 1rem; border-radius:var(--radius-sm); border:1px solid var(--border); background:var(--card); color:var(--text); font-family:var(--font-body); font-size:0.88rem; cursor:pointer; transition:var(--transition); margin-bottom:0.5rem; }
+.trivia-opt:hover { border-color:var(--blue); }
+.trivia-opt.correct { background:var(--green-dim); border-color:var(--green); }
+.trivia-opt.wrong   { background:var(--red-dim);   border-color:var(--red); }
+</style>
+</head>
+<body>
+<div id="page-loader"><div class="loader-logo"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>Savah<span>Lifestyle</span></div><div class="loader-bar-wrap"><div class="loader-bar"></div></div></div>
+
+<div class="page"><div class="container" style="padding-bottom:3rem">
+  <div class="page-header">
+    <div><h1 class="page-title">Games &amp; <span>Puzzles</span></h1><p class="page-subtitle">Mental breaks that keep your mind sharp</p></div>
+    <a href="index.html" class="nav-back"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg> Back</a>
+  </div>
+
+  <div class="game-grid">
+
+    <!-- Snake -->
+    <div class="game-card">
+      <div class="game-header">
+        <div class="game-icon" style="background:var(--green-dim)">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M3 12a9 9 0 1 0 18 0A9 9 0 0 0 3 12z"/><path d="M12 8v4l3 3"/></svg>
+        </div>
+        <div><div class="game-name">Snake</div><div class="game-desc">Classic, endless</div></div>
+        <span class="badge badge-green" id="snake-score-badge">0</span>
+      </div>
+      <div class="game-body">
+        <canvas id="snake-canvas" width="240" height="200" style="width:100%;max-width:240px;display:block;margin:0 auto"></canvas>
+        <div style="display:flex;gap:0.5rem;justify-content:center;margin-top:0.75rem">
+          <button class="btn btn-green btn-sm" id="snake-start-btn" onclick="snakeStart()">Start</button>
+          <span style="font-size:0.78rem;color:var(--text-muted);align-self:center">Arrow keys / WASD</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Wordle clone -->
+    <div class="game-card" style="grid-row:span 2">
+      <div class="game-header">
+        <div class="game-icon" style="background:var(--blue-dim)">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+        </div>
+        <div><div class="game-name">Wordly</div><div class="game-desc">Guess the 5-letter word</div></div>
+      </div>
+      <div class="game-body">
+        <div class="wordle-grid" id="wordle-grid"></div>
+        <div class="wordle-kb" id="wordle-kb"></div>
+        <div id="wordle-msg" style="text-align:center;font-size:0.82rem;color:var(--text-muted);margin:0.5rem 0;min-height:1.2em"></div>
+        <button class="btn btn-secondary btn-sm" onclick="wordleInit()" style="width:100%;margin-top:0.5rem">New Game</button>
+      </div>
+    </div>
+
+    <!-- 2048 -->
+    <div class="game-card">
+      <div class="game-header">
+        <div class="game-icon" style="background:var(--orange)" style="background:rgba(249,115,22,0.15)">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        </div>
+        <div><div class="game-name">2048</div><div class="game-desc">Merge tiles</div></div>
+        <span class="badge badge-blue" id="g2048-score-badge">0</span>
+      </div>
+      <div class="game-body">
+        <div class="g2048-grid" id="g2048-grid"></div>
+        <div style="display:flex;gap:0.5rem;justify-content:center;margin-top:0.75rem">
+          <button class="btn btn-secondary btn-sm" onclick="g2048Init()">New Game</button>
+          <span style="font-size:0.78rem;color:var(--text-muted);align-self:center">Arrow keys</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Memory Match -->
+    <div class="game-card">
+      <div class="game-header">
+        <div class="game-icon" style="background:var(--purple-dim)">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        </div>
+        <div><div class="game-name">Memory Match</div><div class="game-desc">Flip and match pairs</div></div>
+        <span class="badge badge-purple" id="mem-moves-badge">0 moves</span>
+      </div>
+      <div class="game-body">
+        <div class="memory-grid" id="memory-grid"></div>
+        <button class="btn btn-secondary btn-sm" onclick="memoryInit()" style="width:100%;margin-top:0.75rem">New Game</button>
+      </div>
+    </div>
+
+    <!-- Trivia -->
+    <div class="game-card">
+      <div class="game-header">
+        <div class="game-icon" style="background:var(--red-dim)">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </div>
+        <div><div class="game-name">Trivia Quiz</div><div class="game-desc">Test your knowledge</div></div>
+        <span class="badge badge-blue" id="trivia-score-badge">0/0</span>
+      </div>
+      <div class="game-body">
+        <div id="trivia-q" style="font-family:var(--font-head);font-size:0.9rem;font-weight:700;margin-bottom:0.75rem;min-height:2.5rem">Loading...</div>
+        <div id="trivia-opts"></div>
+        <button class="btn btn-secondary btn-sm" onclick="triviaNext()" id="trivia-next-btn" style="width:100%;margin-top:0.25rem;display:none">Next Question</button>
+      </div>
+    </div>
+
+    <!-- Math Sprint -->
+    <div class="game-card">
+      <div class="game-header">
+        <div class="game-icon" style="background:rgba(6,182,212,0.12)">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg>
+        </div>
+        <div><div class="game-name">Math Sprint</div><div class="game-desc">Speed arithmetic</div></div>
+        <span class="badge badge-blue" id="math-score-badge">0pts</span>
+      </div>
+      <div class="game-body">
+        <div style="text-align:center;margin-bottom:0.75rem">
+          <div id="math-timer" style="font-family:var(--font-mono);font-size:1.5rem;font-weight:800;color:var(--blue)">30</div>
+          <div id="math-q" style="font-family:var(--font-head);font-size:1.6rem;font-weight:800;margin:0.5rem 0">?</div>
+        </div>
+        <input class="form-input" type="number" id="math-ans" placeholder="Your answer" style="text-align:center;font-size:1.1rem" onkeydown="if(event.key==='Enter')checkMath()"/>
+        <div style="display:flex;gap:0.5rem;margin-top:0.5rem">
+          <button class="btn btn-primary btn-sm" style="flex:1" onclick="checkMath()">Submit</button>
+          <button class="btn btn-secondary btn-sm" style="flex:1" onclick="mathInit()">New Game</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div></div>
+
+<script>
+/* ── Snake ── */
+let snakeCanvas=document.getElementById('snake-canvas'), snakeCtx=snakeCanvas.getContext('2d');
+let snake, food, dir, nextDir, snakeInterval, snakeRunning=false, snakeScore=0;
+const CELL=20, COLS=12, ROWS=10;
+snakeCanvas.width=COLS*CELL; snakeCanvas.height=ROWS*CELL;
+
+function snakeStart() {
+  snake=[{x:5,y:5},{x:4,y:5},{x:3,y:5}];
+  dir={x:1,y:0}; nextDir={x:1,y:0};
+  snakeScore=0; snakeRunning=true;
+  placeFood(); clearInterval(snakeInterval);
+  snakeInterval=setInterval(snakeTick,120);
+  document.getElementById('snake-start-btn').textContent='Restart';
+}
+
+function placeFood() {
+  let pos;
+  do { pos={x:Math.floor(Math.random()*COLS),y:Math.floor(Math.random()*ROWS)}; }
+  while (snake.some(s=>s.x===pos.x&&s.y===pos.y));
+  food=pos;
+}
+
+function snakeTick() {
+  dir=nextDir;
+  const head={x:(snake[0].x+dir.x+COLS)%COLS, y:(snake[0].y+dir.y+ROWS)%ROWS};
+  if (snake.slice(1).some(s=>s.x===head.x&&s.y===head.y)) { clearInterval(snakeInterval); snakeRunning=false; Toast.show(`Game over! Score: ${snakeScore}`, 'info'); return; }
+  snake.unshift(head);
+  if (head.x===food.x&&head.y===food.y) { snakeScore++; document.getElementById('snake-score-badge').textContent=snakeScore; placeFood(); }
+  else snake.pop();
+  drawSnake();
+}
+
+function drawSnake() {
+  const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
+  snakeCtx.fillStyle = isDark ? '#0f1220' : '#f0f4ff';
+  snakeCtx.fillRect(0,0,snakeCanvas.width,snakeCanvas.height);
+  snake.forEach((s,i)=>{
+    snakeCtx.fillStyle = i===0 ? '#3b82f6' : '#10b981';
+    snakeCtx.beginPath();
+    snakeCtx.roundRect(s.x*CELL+1,s.y*CELL+1,CELL-2,CELL-2,4);
+    snakeCtx.fill();
+  });
+  snakeCtx.fillStyle='#ef4444';
+  snakeCtx.beginPath();
+  snakeCtx.arc(food.x*CELL+CELL/2,food.y*CELL+CELL/2,CELL/2-2,0,Math.PI*2);
+  snakeCtx.fill();
+}
+
+document.addEventListener('keydown', e=>{
+  if (!snakeRunning) return;
+  const k={ArrowUp:{x:0,y:-1},ArrowDown:{x:0,y:1},ArrowLeft:{x:-1,y:0},ArrowRight:{x:1,y:0},w:{x:0,y:-1},s:{x:0,y:1},a:{x:-1,y:0},d:{x:1,y:0}};
+  const nd=k[e.key];
+  if (nd && !(nd.x===-dir.x&&nd.y===-dir.y)) { nextDir=nd; e.preventDefault(); }
+});
+
+// Draw idle state
+(function(){ placeFood=()=>{food={x:6,y:5};}; snake=[{x:5,y:5}]; food={x:6,y:5}; drawSnake(); })();
+
+/* ── Wordle Clone ── */
+const WORDS=['CRANE','BRISK','FLUTE','STOMP','VAGUE','PLUMB','GRIND','SWIFT','BLAZE','KNACK','QUILT','PROXY','WHIRL','FLOCK','CRYPT'];
+let wTarget, wGuesses, wCurrent;
+
+function wordleInit() {
+  wTarget=WORDS[Math.floor(Math.random()*WORDS.length)];
+  wGuesses=[]; wCurrent='';
+  renderWordleGrid(); renderWordleKb();
+  document.getElementById('wordle-msg').textContent='';
+}
+
+function renderWordleGrid() {
+  const g=document.getElementById('wordle-grid');
+  g.innerHTML='';
+  for(let r=0;r<6;r++){
+    const row=document.createElement('div'); row.className='wordle-row';
+    for(let c=0;c<5;c++){
+      const cell=document.createElement('div'); cell.className='wordle-cell';
+      const guess=wGuesses[r];
+      if (guess) {
+        cell.textContent=guess.letters[c]; cell.classList.add(guess.states[c]);
+      } else if (r===wGuesses.length && c<wCurrent.length) {
+        cell.textContent=wCurrent[c]; cell.classList.add('filled');
+      }
+      row.appendChild(cell);
+    }
+    g.appendChild(row);
+  }
+}
+
+function renderWordleKb() {
+  const rows=[['Q','W','E','R','T','Y','U','I','O','P'],['A','S','D','F','G','H','J','K','L'],['ENTER','Z','X','C','V','B','N','M','⌫']];
+  const kbEl=document.getElementById('wordle-kb');
+  const stateMap={};
+  wGuesses.forEach(g=>g.letters.forEach((l,i)=>{ if(!stateMap[l]||stateMap[l]==='absent') stateMap[l]=g.states[i]; }));
+  kbEl.innerHTML=rows.map(row=>`<div class="wordle-kb-row">${row.map(k=>`<button class="wk ${stateMap[k]||''}" onclick="wordleKey('${k}')" style="${k.length>1?'min-width:44px':''}">${k}</button>`).join('')}</div>`).join('');
+}
+
+function wordleKey(k) {
+  if (wGuesses.length>=6 || (wGuesses.length>0&&wGuesses[wGuesses.length-1].won)) return;
+  if (k==='⌫'||k==='BACKSPACE') { wCurrent=wCurrent.slice(0,-1); }
+  else if (k==='ENTER') {
+    if (wCurrent.length<5) { document.getElementById('wordle-msg').textContent='Need 5 letters'; return; }
+    const states=wCurrent.split('').map((l,i)=>{
+      if (wTarget[i]===l) return 'correct';
+      if (wTarget.includes(l)) return 'present';
+      return 'absent';
+    });
+    const won=states.every(s=>s==='correct');
+    wGuesses.push({letters:wCurrent.split(''),states,won});
+    wCurrent='';
+    if (won) document.getElementById('wordle-msg').textContent='Brilliant!';
+    else if (wGuesses.length===6) document.getElementById('wordle-msg').textContent=`Answer: ${wTarget}`;
+  } else if (/^[A-Z]$/.test(k) && wCurrent.length<5) { wCurrent+=k; }
+  renderWordleGrid(); renderWordleKb();
+}
+document.addEventListener('keydown', e=>{
+  const k=e.key.toUpperCase();
+  if (/^[A-Z]$/.test(k)||k==='ENTER'||k==='BACKSPACE') wordleKey(k==='BACKSPACE'?'⌫':k);
+});
+wordleInit();
+
+/* ── 2048 ── */
+let g2048, g2048Score;
+function g2048Init() {
+  g2048=Array.from({length:4},()=>Array(4).fill(0));
+  g2048Score=0; g2048Add(); g2048Add(); g2048Render();
+}
+function g2048Add(){
+  const empty=[];
+  g2048.forEach((r,ri)=>r.forEach((v,ci)=>{if(!v)empty.push({r:ri,c:ci})}));
+  if(!empty.length)return;
+  const pos=empty[Math.floor(Math.random()*empty.length)];
+  g2048[pos.r][pos.c]=Math.random()<0.9?2:4;
+}
+function g2048Render(){
+  const COLORS={0:'var(--border)',2:'#eee4da',4:'#ede0c8',8:'#f2b179',16:'#f59563',32:'#f67c5f',64:'#f65e3b',128:'#edcf72',256:'#edcc61',512:'#edc850',1024:'#edc53f',2048:'#edc22e'};
+  const g=document.getElementById('g2048-grid');
+  g.innerHTML=g2048.flat().map(v=>`<div class="g2048-cell" style="background:${COLORS[v]||'#3c3a32'};color:${v>4?'#f9f6f2':'#776e65'}">${v||''}</div>`).join('');
+  document.getElementById('g2048-score-badge').textContent=g2048Score;
+}
+document.addEventListener('keydown',e=>{
+  const moves={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right'};
+  if(moves[e.key]){e.preventDefault();g2048Move(moves[e.key]);}
+});
+function g2048Move(dir){
+  let moved=false;
+  const rot=(m)=>m[0].map((_,i)=>m.map(r=>r[i]).reverse());
+  const slide=(row)=>{
+    const r=row.filter(v=>v);
+    for(let i=0;i<r.length-1;i++){if(r[i]===r[i+1]){r[i]*=2;g2048Score+=r[i];r.splice(i+1,1);}}
+    while(r.length<4)r.push(0);
+    return r;
+  };
+  let m=g2048.map(r=>[...r]);
+  if(dir==='up')m=rot(rot(rot(m)));
+  if(dir==='right')m=m.map(r=>[...r].reverse());
+  if(dir==='down')m=rot(m);
+  const before=JSON.stringify(m);
+  m=m.map(slide);
+  if(JSON.stringify(m)!==before)moved=true;
+  if(dir==='up')m=rot(m);
+  if(dir==='right')m=m.map(r=>[...r].reverse());
+  if(dir==='down')m=rot(rot(rot(m)));
+  if(moved){g2048=m;g2048Add();g2048Render();}
+}
+g2048Init();
+
+/* ── Memory Match ── */
+const MEM_SYMBOLS=['★','♦','♠','♥','♣','▲','●','■'];
+let memCards=[], memFlipped=[], memMoves=0, memMatched=0;
+function memoryInit(){
+  const syms=[...MEM_SYMBOLS,...MEM_SYMBOLS].sort(()=>Math.random()-0.5);
+  memCards=syms.map((s,i)=>({id:i,sym:s,flipped:false,matched:false}));
+  memFlipped=[]; memMoves=0; memMatched=0; memRender();
+}
+function memRender(){
+  document.getElementById('memory-grid').innerHTML=memCards.map(c=>`
+    <div class="memory-card ${c.flipped||c.matched?'flipped':''}" onclick="memFlip(${c.id})">
+      <div class="memory-face memory-front"></div>
+      <div class="memory-face memory-back" style="font-size:1.2rem">${c.sym}</div>
+    </div>`).join('');
+  document.getElementById('mem-moves-badge').textContent=memMoves+' moves';
+}
+function memFlip(id){
+  if(memFlipped.length>=2)return;
+  const card=memCards[id];
+  if(card.flipped||card.matched)return;
+  card.flipped=true; memFlipped.push(id); memRender();
+  if(memFlipped.length===2){
+    memMoves++;
+    const [a,b]=memFlipped;
+    if(memCards[a].sym===memCards[b].sym){
+      memCards[a].matched=memCards[b].matched=true; memMatched++;
+      memFlipped=[];
+      if(memMatched===8)setTimeout(()=>Toast.show(`Completed in ${memMoves} moves!`,'success'),300);
+    } else { setTimeout(()=>{ memCards[a].flipped=memCards[b].flipped=false; memFlipped=[]; memRender(); },900); }
+    memRender();
+  }
+}
+memoryInit();
+
+/* ── Trivia ── */
+const TRIVIA=[
+  {q:'What is the capital of Kenya?',opts:['Nairobi','Kampala','Dar es Salaam','Kigali'],a:0},
+  {q:'How many planets are in our solar system?',opts:['7','8','9','10'],a:1},
+  {q:'What gas do plants absorb from the air?',opts:['Oxygen','Nitrogen','Carbon Dioxide','Hydrogen'],a:2},
+  {q:'What is 12 × 12?',opts:['124','144','132','148'],a:1},
+  {q:'Who wrote Romeo and Juliet?',opts:['Dickens','Shakespeare','Austen','Hemingway'],a:1},
+  {q:'What is the speed of light (approx)?',opts:['300,000 km/s','150,000 km/s','450,000 km/s','600,000 km/s'],a:0},
+  {q:'How many sides does a hexagon have?',opts:['5','6','7','8'],a:1},
+  {q:'What is the largest ocean on Earth?',opts:['Atlantic','Indian','Pacific','Arctic'],a:2},
+  {q:'In what year did the first iPhone launch?',opts:['2005','2006','2007','2008'],a:2},
+  {q:'What element has the chemical symbol Au?',opts:['Silver','Gold','Aluminum','Argon'],a:1},
+];
+let triviaIdx=0, triviaScore=0, triviaAnswered=false;
+function triviaLoad(){
+  const q=TRIVIA[triviaIdx%TRIVIA.length];
+  document.getElementById('trivia-q').textContent=`Q${triviaIdx+1}: ${q.q}`;
+  document.getElementById('trivia-opts').innerHTML=q.opts.map((o,i)=>`<button class="trivia-opt" onclick="triviaAnswer(${i})">${o}</button>`).join('');
+  document.getElementById('trivia-next-btn').style.display='none';
+  triviaAnswered=false;
+  document.getElementById('trivia-score-badge').textContent=`${triviaScore}/${triviaIdx}`;
+}
+function triviaAnswer(i){
+  if(triviaAnswered)return;
+  triviaAnswered=true;
+  const q=TRIVIA[triviaIdx%TRIVIA.length];
+  const btns=document.querySelectorAll('.trivia-opt');
+  btns.forEach((b,bi)=>b.classList.add(bi===q.a?'correct':bi===i&&i!==q.a?'wrong':''));
+  if(i===q.a)triviaScore++;
+  document.getElementById('trivia-next-btn').style.display='block';
+  document.getElementById('trivia-score-badge').textContent=`${triviaScore}/${triviaIdx+1}`;
+}
+function triviaNext(){ triviaIdx++; triviaLoad(); }
+triviaLoad();
+
+/* ── Math Sprint ── */
+let mathScore=0, mathTimer, mathTimeLeft=30, mathRunning=false;
+let mathA,mathB,mathOp;
+function mathInit(){
+  clearInterval(mathTimer); mathScore=0; mathTimeLeft=30; mathRunning=true;
+  mathNextQ(); mathTick();
+  mathTimer=setInterval(()=>{
+    mathTimeLeft--;
+    document.getElementById('math-timer').textContent=mathTimeLeft;
+    if(mathTimeLeft<=0){ clearInterval(mathTimer); mathRunning=false; document.getElementById('math-q').textContent='Time!'; Toast.show(`Math Sprint over! Score: ${mathScore}`,'info'); }
+  },1000);
+}
+function mathNextQ(){
+  const ops=['+','-','×'];
+  mathOp=ops[Math.floor(Math.random()*ops.length)];
+  mathA=Math.floor(Math.random()*12)+1;
+  mathB=Math.floor(Math.random()*(mathOp==='-'?mathA:12))+1;
+  document.getElementById('math-q').textContent=`${mathA} ${mathOp} ${mathB} = ?`;
+  document.getElementById('math-ans').value=''; document.getElementById('math-ans').focus();
+}
+function checkMath(){
+  if(!mathRunning)return;
+  const val=parseInt(document.getElementById('math-ans').value);
+  const correct=mathOp==='+'?mathA+mathB:mathOp==='-'?mathA-mathB:mathA*mathB;
+  if(val===correct){ mathScore+=10; Toast.show('+10',    'success',600); }
+  else             { mathScore=Math.max(0,mathScore-5); Toast.show(`Wrong! ${correct}`,'error',1200); }
+  document.getElementById('math-score-badge').textContent=mathScore+'pts';
+  mathNextQ();
+}
+mathNextQ();
+</script>
+</body></html>

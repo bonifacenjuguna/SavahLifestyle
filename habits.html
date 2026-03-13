@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Habit Tracker — SavahLifestyle</title>
+  <link rel="stylesheet" href="css/style.css"/>
+  <script src="js/app.js" defer></script>
+  <script src="js/localAuth.js" defer></script>
+<script src="js/nav.js" defer></script>
+  
+  
+  <style>
+    .habit-row { display:flex; align-items:center; gap:0.85rem; padding:1rem 1.1rem; background:var(--card); border:1px solid var(--border); border-radius:var(--radius); margin-bottom:0.6rem; transition:var(--transition); }
+    .habit-row:hover { border-color:var(--border-accent); }
+    .habit-emoji { font-size:1.4rem; width:36px; text-align:center; flex-shrink:0; }
+    .habit-info { flex:1; min-width:0; }
+    .habit-name { font-family:var(--font-head); font-weight:700; font-size:0.92rem; color:var(--text); }
+    .habit-streak { font-size:0.72rem; color:var(--blue); margin-top:0.1rem; }
+    .habit-week { display:flex; gap:3px; flex-shrink:0; }
+    .hday { width:24px; height:24px; border-radius:5px; background:var(--bg3); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:0.55rem; color:var(--text-muted); font-weight:600; }
+    .hday.done { background:var(--blue-dim); border-color:var(--border-accent); color:var(--blue); }
+    .hday.today-done { background:var(--blue); color:#000; }
+    .habit-check { width:34px; height:34px; border-radius:50%; border:2px solid var(--border); cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:var(--transition); background:transparent; }
+    .habit-check:hover { border-color:var(--blue); }
+    .habit-check.done { background:var(--blue); border-color:var(--blue); }
+    .streak-fire { animation: pulse 1.5s infinite; }
+  </style>
+</head>
+<body>
+<nav class="nav">
+  <a href="index.html" class="nav-logo"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>Savah<span>Lifestyle</span></a>
+  <div class="nav-actions">
+    <a href="index.html" class="nav-back"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg> <span>Dashboard</span></a>
+    <button class="theme-toggle" id="theme-toggle"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/></svg></button>
+  </div>
+</nav>
+<div class="page"><div class="container-sm">
+  <div class="page-header">
+    <div><h1 class="page-title">Habit <span>Tracker</span></h1><p class="page-subtitle">Build daily consistency and track your streaks</p></div>
+    <button class="btn btn-primary" onclick="openModal('habit-modal')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      New Habit
+    </button>
+  </div>
+
+  <div class="grid-4" style="margin-bottom:2rem" id="habit-stats"></div>
+
+  <!-- Week Header -->
+  <div style="display:flex;align-items:center;justify-content:flex-end;gap:3px;margin-bottom:0.5rem;padding-right:0.2rem" id="week-header"></div>
+
+  <div id="habit-list"></div>
+</div></div>
+
+<!-- Add Habit Modal -->
+<div class="modal-overlay" id="habit-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">New Habit</div>
+      <button class="btn-icon btn" onclick="closeModal('habit-modal')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="form-group"><label class="form-label">Habit Name</label><input type="text" id="habit-name" placeholder="e.g. Morning Run" /></div>
+    <div class="form-group"><label class="form-label">Emoji</label><input type="text" id="habit-emoji" placeholder="<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><path d="M13 4a1 1 0 1 0 2 0 1 1 0 0 0-2 0"/><path d="M7 21l3-6 3 2 2-5"/><path d="M7 9l4 1 2-2 4 1"/></svg>" maxlength="2" style="font-size:1.3rem" /></div>
+    <div class="form-group"><label class="form-label">Category</label>
+      <select id="habit-cat">
+        <option value="Health"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><path d="M10.5 20.5 3.5 13.5a5 5 0 0 1 7-7l7 7a5 5 0 0 1-7 7"/><line x1="8.5" y1="8.5" x2="15.5" y2="15.5"/></svg> Health</option>
+        <option value="Fitness"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><path d="M6 5v14"/><path d="M18 5v14"/><path d="M2 9h4"/><path d="M2 15h4"/><path d="M18 9h4"/><path d="M18 15h4"/><line x1="6" y1="12" x2="18" y2="12"/></svg>️ Fitness</option>
+        <option value="Mind"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.46"/></svg> Mind</option>
+        <option value="Productivity"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Productivity</option>
+        <option value="Social"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Social</option>
+        <option value="Finance"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Finance</option>
+        <option value="Learning"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg> Learning</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:0.75rem;margin-top:1rem">
+      <button class="btn btn-secondary" style="flex:1" onclick="closeModal('habit-modal')">Cancel</button>
+      <button class="btn btn-primary" style="flex:1" onclick="addHabit()">Add Habit</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let habits = JSON.parse(localStorage.getItem('savah:habits') || '[]');
+const today = new Date().toISOString().split('T')[0];
+
+// Generate last 7 days
+function getLast7Days() {
+  return Array.from({length:7}, (_, i) => {
+    const d = new Date(); d.setDate(d.getDate() - (6-i));
+    return d.toISOString().split('T')[0];
+  });
+}
+
+function addHabit() {
+  const name = document.getElementById('habit-name').value.trim();
+  const emoji = document.getElementById('habit-emoji').value.trim() || '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline-block;vertical-align:-2px;color:var(--green)"><polyline points="20 6 9 17 4 12"/></svg>';
+  if (!name) { Toast.show('Enter a habit name', 'warning'); return; }
+  habits.push({ id: Date.now(), name, emoji, category: document.getElementById('habit-cat').value, completedDates: [], created: today });
+  save();
+  closeModal('habit-modal');
+  document.getElementById('habit-name').value = '';
+  document.getElementById('habit-emoji').value = '';
+  Toast.show('Habit added!', 'success');
+}
+
+function toggleHabit(id) {
+  const h = habits.find(h => h.id === id);
+  if (!h) return;
+  if (h.completedDates.includes(today)) {
+    h.completedDates = h.completedDates.filter(d => d !== today);
+  } else {
+    h.completedDates.push(today);
+    Toast.show(`${h.emoji} ${h.name} completed!`, 'success');
+  }
+  save();
+}
+
+function deleteHabit(id) {
+  if (!confirm('Delete this habit?')) return;
+  habits = habits.filter(h => h.id !== id);
+  save();
+}
+
+function getStreak(habit) {
+  let streak = 0;
+  let d = new Date();
+  while (true) {
+    const key = d.toISOString().split('T')[0];
+    if (habit.completedDates.includes(key)) { streak++; d.setDate(d.getDate()-1); }
+    else break;
+  }
+  return streak;
+}
+
+function save() {
+  localStorage.setItem('savah:habits', JSON.stringify(habits));
+  render();
+}
+
+function render() {
+  const days = getLast7Days();
+  const dayNames = days.map(d => new Date(d).toLocaleDateString('en-US', { weekday: 'short' }).slice(0,1));
+
+  // Week header
+  document.getElementById('week-header').innerHTML = ['','','','','','',''].map((_, i) => {
+    const isToday = days[i] === today;
+    return `<div style="width:24px;text-align:center;font-size:0.6rem;font-weight:600;color:${isToday ? 'var(--blue)' : 'var(--text-muted)'};">${dayNames[i]}</div>`;
+  }).join('') + '<div style="width:34px"></div><div style="width:34px"></div>';
+
+  const todayDone = habits.filter(h => h.completedDates.includes(today)).length;
+  const totalStreaks = habits.reduce((s, h) => s + getStreak(h), 0);
+  const bestStreak = habits.reduce((best, h) => Math.max(best, getStreak(h)), 0);
+
+  document.getElementById('habit-stats').innerHTML = [
+    { label: 'Total Habits', value: habits.length, color: 'var(--blue)' },
+    { label: 'Done Today', value: `${todayDone}/${habits.length}`, color: 'var(--success)' },
+    { label: 'Total Streaks', value: totalStreaks + '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><path d="M12 2c0 0-4 4-4 8a4 4 0 0 0 8 0c0-4-4-8-4-8z"/><path d="M12 14c-1.1 0-2-.9-2-2 0-2 2-4 2-4s2 2 2 4c0 1.1-.9 2-2 2z"/></svg>', color: '#f59e0b' },
+    { label: 'Best Streak', value: bestStreak, color: '#a855f7' },
+  ].map(s => `<div class="stat-card"><div><div class="stat-value" style="color:${s.color}">${s.value}</div><div class="stat-label">${s.label}</div></div></div>`).join('');
+
+  if (!habits.length) {
+    document.getElementById('habit-list').innerHTML = `<div class="empty-state"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><h3>No habits yet</h3><p>Add your first habit to start building consistency!</p></div>`;
+    return;
+  }
+
+  const doneToday = habit => habit.completedDates.includes(today);
+
+  document.getElementById('habit-list').innerHTML = habits.map(h => {
+    const streak = getStreak(h);
+    const done = doneToday(h);
+    const weekDots = days.map((day, i) => {
+      const isDone = h.completedDates.includes(day);
+      const isToday = day === today;
+      return `<div class="hday${isDone && isToday ? ' today-done' : isDone ? ' done' : ''}">${isToday && isDone ? '✓' : isDone ? '✓' : ''}</div>`;
+    }).join('');
+    return `
+      <div class="habit-row">
+        <div class="habit-emoji">${h.emoji}</div>
+        <div class="habit-info">
+          <div class="habit-name">${h.name}</div>
+          <div class="habit-streak">${streak > 0 ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><path d="M12 2c0 0-4 4-4 8a4 4 0 0 0 8 0c0-4-4-8-4-8z"/><path d="M12 14c-1.1 0-2-.9-2-2 0-2 2-4 2-4s2 2 2 4c0 1.1-.9 2-2 2z"/></svg> ${streak} day streak` : 'Start your streak today!'}</div>
+        </div>
+        <div class="habit-week">${weekDots}</div>
+        <div class="habit-check ${done ? 'done' : ''}" onclick="toggleHabit(${h.id})">
+          ${done ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
+        </div>
+        <button class="btn-icon btn" onclick="deleteHabit(${h.id})" style="opacity:0.4" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.4">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+        </button>
+      </div>
+    `;
+  }).join('');
+}
+render();
+</script>
+</body>
+</html>

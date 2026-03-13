@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Body Metrics — SavahLifestyle</title>
+  <link rel="stylesheet" href="css/style.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <script src="js/app.js" defer></script>
+  <script src="js/localAuth.js" defer></script>
+<script src="js/nav.js" defer></script>
+  <style>
+    .bmi-bar{height:16px;border-radius:8px;background:linear-gradient(90deg,#22c55e 0%,#3b82f6 25%,#f59e0b 55%,#ef4444 80%,#7c3aed 100%);position:relative;margin:1rem 0;}
+    .bmi-marker{position:absolute;top:-6px;width:4px;height:28px;background:#fff;border-radius:2px;transform:translateX(-50%);transition:left .5s;}
+    .metric-entry{display:flex;align-items:center;gap:.75rem;padding:.7rem 1rem;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:.45rem;}
+  </style>
+</head>
+<body>
+<div id="page-loader"><div class="loader-logo"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>Savah<span>Lifestyle</span></div><div class="loader-bar-wrap"><div class="loader-bar"></div></div></div>
+<div class="page"><div class="container" style="padding-top:2rem;padding-bottom:3rem">
+  <div class="page-header">
+    <div><h1 class="page-title">Body <span>Metrics</span></h1><p class="page-subtitle">Track weight, BMI and body measurements over time</p></div>
+    <a href="index.html" class="nav-back"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>Back</a>
+  </div>
+  <div class="grid-4" style="margin-bottom:2rem" id="bm-stats"></div>
+  <div class="grid-2" style="margin-bottom:2rem">
+    <div class="card card-p">
+      <div class="card-title" style="margin-bottom:1rem">📏 Log Measurement</div>
+      <div class="form-group"><label class="form-label">Date</label><input type="date" class="form-input" id="bm-date"/></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
+        <div class="form-group"><label class="form-label">Weight (kg)</label><input type="number" class="form-input" id="bm-weight" placeholder="e.g. 70" step="0.1"/></div>
+        <div class="form-group"><label class="form-label">Height (cm)</label><input type="number" class="form-input" id="bm-height" placeholder="e.g. 175"/></div>
+        <div class="form-group"><label class="form-label">Waist (cm)</label><input type="number" class="form-input" id="bm-waist" placeholder="Optional" step="0.1"/></div>
+        <div class="form-group"><label class="form-label">Body Fat %</label><input type="number" class="form-input" id="bm-fat" placeholder="Optional" step="0.1"/></div>
+      </div>
+      <div class="form-group"><label class="form-label">Notes</label><input type="text" class="form-input" id="bm-notes" placeholder="e.g. after morning workout"/></div>
+      <button class="btn btn-primary" style="width:100%" onclick="logMetric()">Save Measurement</button>
+    </div>
+    <div class="card card-p">
+      <div class="card-title" style="margin-bottom:1rem">⚖️ BMI Calculator</div>
+      <div id="bmi-result" style="text-align:center;padding:1rem 0">
+        <div style="font-family:var(--font-head);font-size:3rem;font-weight:800" id="bmi-val">—</div>
+        <div style="font-size:.9rem;color:var(--text-muted)" id="bmi-cat">Enter weight and height to calculate</div>
+        <div class="bmi-bar" id="bmi-bar"><div class="bmi-marker" id="bmi-marker" style="left:0%"></div></div>
+        <div style="display:flex;justify-content:space-between;font-size:.68rem;color:var(--text-muted);margin-top:.25rem">
+          <span>Underweight</span><span>Normal</span><span>Overweight</span><span>Obese</span>
+        </div>
+      </div>
+      <div style="margin-top:1rem;padding:.85rem;background:var(--bg2);border-radius:var(--radius-sm)">
+        <div style="font-size:.82rem;font-weight:700;margin-bottom:.5rem">BMI Ranges</div>
+        <div style="font-size:.78rem;color:var(--text-muted);display:flex;flex-direction:column;gap:.3rem">
+          <div><span style="color:#22c55e">●</span> Below 18.5 — Underweight</div>
+          <div><span style="color:#3b82f6">●</span> 18.5–24.9 — Normal weight</div>
+          <div><span style="color:#f59e0b">●</span> 25–29.9 — Overweight</div>
+          <div><span style="color:#ef4444">●</span> 30 and above — Obese</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card card-p" style="margin-bottom:2rem">
+    <div class="card-title" style="margin-bottom:1rem">📈 Weight Trend</div>
+    <div style="height:200px"><canvas id="weight-chart"></canvas></div>
+  </div>
+  <div class="card card-p">
+    <div class="card-title" style="margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between">
+      History
+      <button class="btn btn-secondary btn-sm" onclick="if(confirm('Clear all?')){bmData=[];save();render();}" style="color:var(--danger)">Clear All</button>
+    </div>
+    <div id="bm-list"></div>
+  </div>
+</div></div>
+<script>
+let bmData = JSON.parse(localStorage.getItem('savah:bodymetrics')||'[]');
+document.getElementById('bm-date').value = new Date().toISOString().split('T')[0];
+
+function calcBMI(w,h){return h>0?Math.round(w/(h/100)**2*10)/10:null;}
+function bmiCategory(bmi){if(bmi<18.5)return{c:'Underweight',col:'#22c55e',pct:10};if(bmi<25)return{c:'Normal',col:'#3b82f6',pct:35};if(bmi<30)return{c:'Overweight',col:'#f59e0b',pct:62};return{c:'Obese',col:'#ef4444',pct:85};}
+
+function updateBMIDisplay(){
+  const w=parseFloat(document.getElementById('bm-weight').value)||0, h=parseFloat(document.getElementById('bm-height').value)||0;
+  if(!w||!h)return;
+  const bmi=calcBMI(w,h), cat=bmiCategory(bmi);
+  document.getElementById('bmi-val').textContent=bmi;
+  document.getElementById('bmi-val').style.color=cat.col;
+  document.getElementById('bmi-cat').textContent=cat.c;
+  document.getElementById('bmi-marker').style.left=cat.pct+'%';
+}
+['bm-weight','bm-height'].forEach(id=>document.getElementById(id).addEventListener('input',updateBMIDisplay));
+
+function logMetric(){
+  const date=document.getElementById('bm-date').value, w=parseFloat(document.getElementById('bm-weight').value), h=parseFloat(document.getElementById('bm-height').value);
+  const waist=parseFloat(document.getElementById('bm-waist').value)||null, fat=parseFloat(document.getElementById('bm-fat').value)||null;
+  const notes=document.getElementById('bm-notes').value.trim();
+  if(!date||!w){Toast.show('Date and weight required','warning');return;}
+  const bmi=h?calcBMI(w,h):null;
+  bmData.unshift({id:Date.now(),date,weight:w,height:h||null,bmi,waist,fat,notes});
+  save();render();Toast.show('Measurement saved','success');
+  document.getElementById('bm-notes').value='';
+}
+function save(){localStorage.setItem('savah:bodymetrics',JSON.stringify(bmData));}
+function render(){
+  const latest=bmData[0]||null;
+  const firstW=bmData.length>1?bmData[bmData.length-1].weight:null;
+  const diff=latest&&firstW?Math.round((latest.weight-firstW)*10)/10:null;
+  document.getElementById('bm-stats').innerHTML=[
+    {l:'Latest Weight',v:latest?latest.weight+' kg':'—',c:'var(--blue)'},
+    {l:'Latest BMI',v:latest?.bmi||'—',c:'var(--purple)'},
+    {l:'Total Logs',v:bmData.length,c:'var(--success)'},
+    {l:'Change',v:diff!==null?(diff>0?'+':'')+diff+' kg':'—',c:diff===null?'var(--text-muted)':diff<0?'var(--success)':'var(--warning)'},
+  ].map(s=>`<div class="stat-card"><div><div class="stat-value" style="color:${s.c};font-size:1.4rem">${s.v}</div><div class="stat-label">${s.l}</div></div></div>`).join('');
+  const chartData=[...bmData].reverse().slice(-20);
+  if(window._bmC)window._bmC.destroy();
+  if(chartData.length>1){
+    window._bmC=new Chart(document.getElementById('weight-chart'),{type:'line',data:{labels:chartData.map(e=>e.date),datasets:[{label:'Weight (kg)',data:chartData.map(e=>e.weight),borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,0.1)',tension:0.4,fill:true,pointRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#64748b',maxRotation:45},grid:{display:false}},y:{ticks:{color:'#64748b'},grid:{color:'rgba(255,255,255,0.04)'}}}}});
+  }
+  if(!bmData.length){document.getElementById('bm-list').innerHTML=`<div class="empty-state"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="3" y1="12" x2="21" y2="12"/><line x1="12" y1="3" x2="12" y2="21"/><circle cx="12" cy="12" r="10"/></svg><h3>No measurements yet</h3><p>Log your first body measurement above.</p></div>`;return;}
+  document.getElementById('bm-list').innerHTML=bmData.map(e=>`
+    <div class="metric-entry">
+      <div style="font-size:1.4rem">⚖️</div>
+      <div style="flex:1">
+        <div style="font-weight:600;font-size:.9rem">${e.date} · ${e.weight} kg${e.height?' · '+e.height+' cm':''}</div>
+        <div class="muted">${e.bmi?'BMI: '+e.bmi+' ·':''} ${e.waist?'Waist: '+e.waist+'cm ·':''} ${e.fat?'Fat: '+e.fat+'% ·':''} ${e.notes||'No notes'}</div>
+      </div>
+      <button class="btn-icon btn" onclick="bmData=bmData.filter(x=>x.id!==${e.id});save();render()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg></button>
+    </div>`).join('');
+}
+render();
+document.addEventListener('DOMContentLoaded',()=>{buildNav();buildFooter();});
+</script>
+</body>
+</html>

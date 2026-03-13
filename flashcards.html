@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Flashcards — SavahLifestyle v6</title>
+<link rel="stylesheet" href="css/style.css"/>
+<script src="js/app.js" defer></script>
+<script src="js/localAuth.js" defer></script>
+<script src="js/nav.js" defer></script>
+<style>
+.fc-scene { width:100%; max-width:500px; margin:2rem auto; perspective:1200px; cursor:pointer; }
+.fc-card-wrap { position:relative; width:100%; height:260px; transform-style:preserve-3d; transition:transform 0.6s cubic-bezier(0.4,0,0.2,1); }
+.fc-card-wrap.flipped { transform:rotateY(180deg); }
+.fc-face { position:absolute; inset:0; border-radius:var(--radius-lg); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:2rem; backface-visibility:hidden; -webkit-backface-visibility:hidden; text-align:center; }
+.fc-front { background:linear-gradient(135deg,var(--blue-dim),var(--purple-dim)); border:1px solid var(--blue-border); }
+.fc-back  { background:linear-gradient(135deg,var(--green-dim),rgba(6,182,212,0.1)); border:1px solid var(--green-border); transform:rotateY(180deg); }
+[data-theme="light"] .fc-front { background:linear-gradient(135deg,rgba(59,130,246,0.08),rgba(139,92,246,0.06)); }
+[data-theme="light"] .fc-back  { background:linear-gradient(135deg,rgba(16,185,129,0.07),rgba(6,182,212,0.05)); }
+.fc-face-label { font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-muted); margin-bottom:0.75rem; }
+.fc-face-text  { font-family:var(--font-head); font-size:1.3rem; font-weight:700; line-height:1.35; }
+.fc-hint { font-size:0.78rem; color:var(--text-muted); margin-top:0.5rem; }
+.fc-counter { font-size:0.82rem; color:var(--text-muted); text-align:center; margin-bottom:0.5rem; }
+.fc-progress-wrap { max-width:500px; margin:0 auto 1.5rem; }
+.fc-nav { display:flex; gap:1rem; justify-content:center; margin-top:1rem; }
+.deck-card { background:var(--card); border:1px solid var(--glass-border); border-radius:var(--radius); padding:1rem 1.25rem; cursor:pointer; transition:var(--transition); display:flex; align-items:center; justify-content:space-between; }
+.deck-card:hover { border-color:var(--border-accent); transform:translateY(-2px); }
+.deck-name { font-family:var(--font-head); font-weight:700; font-size:0.9rem; }
+.deck-count { font-size:0.75rem; color:var(--text-muted); margin-top:0.15rem; }
+</style>
+</head>
+<body>
+<div id="page-loader"><div class="loader-logo"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>Savah<span>Lifestyle</span></div><div class="loader-bar-wrap"><div class="loader-bar"></div></div></div>
+
+<div class="page"><div class="container" style="padding-bottom:3rem">
+  <div class="page-header">
+    <div><h1 class="page-title">Flash<span>cards</span></h1><p class="page-subtitle">Study smarter with spaced repetition</p></div>
+    <div style="display:flex;gap:0.65rem">
+      <button class="btn btn-secondary" onclick="showView('decks')" id="btn-decks">All Decks</button>
+      <button class="btn btn-primary" onclick="openAddDeck()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        New Deck
+      </button>
+    </div>
+  </div>
+
+  <!-- Decks view -->
+  <div id="view-decks">
+    <div class="grid-auto" id="decks-grid"></div>
+    <div id="no-decks" style="display:none;text-align:center;padding:3rem;color:var(--text-muted)">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin:0 auto 1rem;display:block;opacity:0.3"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M12 9v6"/><path d="M9 12h6"/></svg>
+      <p>No decks yet. Create your first flashcard deck!</p>
+    </div>
+  </div>
+
+  <!-- Study view -->
+  <div id="view-study" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem">
+      <div>
+        <div style="font-family:var(--font-head);font-size:1.1rem;font-weight:700" id="study-deck-name">Deck</div>
+        <div class="fc-counter" id="fc-counter">Card 1 of 10</div>
+      </div>
+      <div style="display:flex;gap:0.5rem">
+        <span class="badge badge-green" id="score-correct">0 correct</span>
+        <span class="badge badge-red" id="score-wrong">0 wrong</span>
+      </div>
+    </div>
+    <div class="fc-progress-wrap">
+      <div class="progress-bar"><div class="progress-fill blue" id="fc-progress" style="width:0%"></div></div>
+    </div>
+    <div class="fc-scene" onclick="flipCard()" title="Click to flip">
+      <div class="fc-card-wrap" id="fc-card-wrap">
+        <div class="fc-face fc-front">
+          <div class="fc-face-label">Question</div>
+          <div class="fc-face-text" id="fc-front-text">Loading...</div>
+          <div class="fc-hint">Click to reveal answer</div>
+        </div>
+        <div class="fc-face fc-back">
+          <div class="fc-face-label">Answer</div>
+          <div class="fc-face-text" id="fc-back-text"></div>
+        </div>
+      </div>
+    </div>
+    <div class="fc-nav" id="fc-nav" style="display:none">
+      <button class="btn btn-danger" onclick="markCard(false)">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        Hard
+      </button>
+      <button class="btn btn-secondary" onclick="markCard(null)">Skip</button>
+      <button class="btn btn-green" onclick="markCard(true)">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        Easy
+      </button>
+    </div>
+  </div>
+</div></div>
+
+<!-- Add deck modal -->
+<div class="modal-overlay" id="deck-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">New Deck</div>
+      <button class="btn btn-icon btn-secondary" onclick="document.getElementById('deck-modal').classList.remove('open')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="form-group"><label class="form-label">Deck Name</label><input class="form-input" id="deck-name" placeholder="e.g. Spanish Vocab"/></div>
+    <div id="cards-list" style="margin-bottom:1rem"></div>
+    <button class="btn btn-secondary btn-sm" onclick="addCardRow()" style="margin-bottom:1rem;width:100%">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Add Card
+    </button>
+    <div style="display:flex;gap:0.75rem">
+      <button class="btn btn-secondary" style="flex:1" onclick="document.getElementById('deck-modal').classList.remove('open')">Cancel</button>
+      <button class="btn btn-primary" style="flex:1" onclick="saveDeck()">Save Deck</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let decks = JSON.parse(localStorage.getItem('savah:flashcards') || '[]');
+let studyDeck = null, studyIdx = 0, flipped = false, correct = 0, wrong = 0;
+
+function save() { localStorage.setItem('savah:flashcards', JSON.stringify(decks)); }
+
+function showView(v) {
+  document.getElementById('view-decks').style.display  = v === 'decks'  ? '' : 'none';
+  document.getElementById('view-study').style.display  = v === 'study'  ? '' : 'none';
+}
+
+function renderDecks() {
+  const g = document.getElementById('decks-grid');
+  document.getElementById('no-decks').style.display = decks.length ? 'none' : 'block';
+  g.innerHTML = decks.map((d,i) => `
+    <div class="deck-card" onclick="startStudy(${i})">
+      <div>
+        <div class="deck-name">${d.name}</div>
+        <div class="deck-count">${d.cards.length} card${d.cards.length!==1?'s':''}</div>
+      </div>
+      <div style="display:flex;gap:0.5rem;align-items:center">
+        <span class="badge badge-blue">${d.cards.length}</span>
+        <button onclick="event.stopPropagation();deleteDeck(${i})" style="background:none;border:none;cursor:pointer;opacity:0.4" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.4">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        </button>
+      </div>
+    </div>`).join('');
+}
+
+function openAddDeck() {
+  document.getElementById('deck-name').value = '';
+  document.getElementById('cards-list').innerHTML = '';
+  addCardRow(); addCardRow();
+  document.getElementById('deck-modal').classList.add('open');
+}
+
+function addCardRow() {
+  const wrap = document.getElementById('cards-list');
+  const row = document.createElement('div');
+  row.style.cssText = 'display:grid;grid-template-columns:1fr 1fr auto;gap:0.5rem;margin-bottom:0.5rem;align-items:center';
+  row.innerHTML = `
+    <input class="form-input" placeholder="Question" style="font-size:0.82rem;padding:0.5rem 0.75rem"/>
+    <input class="form-input" placeholder="Answer" style="font-size:0.82rem;padding:0.5rem 0.75rem"/>
+    <button onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:var(--danger);padding:0.25rem">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>`;
+  wrap.appendChild(row);
+}
+
+function saveDeck() {
+  const name = document.getElementById('deck-name').value.trim();
+  if (!name) { Toast.show('Enter a deck name', 'warning'); return; }
+  const rows = document.querySelectorAll('#cards-list > div');
+  const cards = [];
+  rows.forEach(r => {
+    const inputs = r.querySelectorAll('input');
+    const q = inputs[0].value.trim(), a = inputs[1].value.trim();
+    if (q && a) cards.push({ q, a });
+  });
+  if (!cards.length) { Toast.show('Add at least one card', 'warning'); return; }
+  decks.push({ name, cards });
+  save(); renderDecks();
+  document.getElementById('deck-modal').classList.remove('open');
+  Toast.show(`Deck "${name}" created!`, 'success');
+}
+
+function deleteDeck(i) {
+  decks.splice(i, 1);
+  save(); renderDecks();
+  Toast.show('Deck deleted', 'info');
+}
+
+function startStudy(i) {
+  studyDeck = decks[i];
+  studyIdx = 0; flipped = false; correct = 0; wrong = 0;
+  showView('study');
+  document.getElementById('study-deck-name').textContent = studyDeck.name;
+  showCard();
+}
+
+function showCard() {
+  const card = studyDeck.cards[studyIdx];
+  document.getElementById('fc-front-text').textContent = card.q;
+  document.getElementById('fc-back-text').textContent  = card.a;
+  document.getElementById('fc-counter').textContent = `Card ${studyIdx+1} of ${studyDeck.cards.length}`;
+  document.getElementById('fc-progress').style.width = `${((studyIdx)/studyDeck.cards.length)*100}%`;
+  document.getElementById('score-correct').textContent = `${correct} correct`;
+  document.getElementById('score-wrong').textContent   = `${wrong} wrong`;
+  const wrap = document.getElementById('fc-card-wrap');
+  wrap.classList.remove('flipped'); flipped = false;
+  document.getElementById('fc-nav').style.display = 'none';
+}
+
+function flipCard() {
+  flipped = !flipped;
+  document.getElementById('fc-card-wrap').classList.toggle('flipped', flipped);
+  document.getElementById('fc-nav').style.display = flipped ? 'flex' : 'none';
+}
+
+function markCard(knew) {
+  if (knew === true)  correct++;
+  if (knew === false) wrong++;
+  studyIdx++;
+  if (studyIdx >= studyDeck.cards.length) {
+    showView('decks');
+    Toast.show(`Session complete! ${correct}/${studyDeck.cards.length} correct`, 'success', 5000);
+    return;
+  }
+  showCard();
+}
+
+renderDecks();
+</script>
+</body></html>

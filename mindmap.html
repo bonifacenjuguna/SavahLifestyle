@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Mind Map — SavahLifestyle v6</title>
+<link rel="stylesheet" href="css/style.css"/>
+<script src="js/app.js" defer></script>
+<script src="js/localAuth.js" defer></script>
+<script src="js/nav.js" defer></script>
+<style>
+#mm-canvas { position:relative; width:100%; height:600px; border:1px solid var(--glass-border); border-radius:var(--radius); background:var(--bg2); overflow:hidden; cursor:grab; user-select:none; }
+[data-theme="light"] #mm-canvas { background:#f8faff; }
+#mm-canvas:active { cursor:grabbing; }
+.mm-node {
+  position:absolute; padding:0.5rem 1rem; border-radius:30px;
+  font-family:var(--font-head); font-size:0.82rem; font-weight:700;
+  cursor:pointer; transition:box-shadow 0.2s, transform 0.2s;
+  white-space:nowrap; border:2px solid transparent; min-width:80px; text-align:center;
+}
+.mm-node:hover { transform:scale(1.06); }
+.mm-node.root { font-size:1rem; padding:0.75rem 1.5rem; }
+.mm-node.selected { box-shadow:0 0 0 3px rgba(255,255,255,0.4); }
+.mm-toolbar { display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:1rem; align-items:center; }
+</style>
+</head>
+<body>
+<div id="page-loader"><div class="loader-logo"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>Savah<span>Lifestyle</span></div><div class="loader-bar-wrap"><div class="loader-bar"></div></div></div>
+
+<div class="page"><div class="container" style="padding-bottom:3rem">
+  <div class="page-header">
+    <div><h1 class="page-title">Mind <span>Map</span></h1><p class="page-subtitle">Visualize ideas with drag-and-drop nodes</p></div>
+    <a href="index.html" class="nav-back"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg> Back</a>
+  </div>
+
+  <div class="mm-toolbar">
+    <button class="btn btn-primary btn-sm" onclick="addChild()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Add Child
+    </button>
+    <button class="btn btn-secondary btn-sm" onclick="deleteSelected()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M9 6V4h6v2"/></svg>
+      Delete
+    </button>
+    <button class="btn btn-secondary btn-sm" onclick="clearMap()">Clear</button>
+    <button class="btn btn-secondary btn-sm" onclick="saveMap()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+      Save
+    </button>
+    <span style="font-size:0.78rem;color:var(--text-muted);margin-left:auto">Click node to select. Drag to move. Double-click to rename.</span>
+  </div>
+
+  <div id="mm-canvas">
+    <svg id="mm-svg" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible"></svg>
+  </div>
+</div></div>
+
+<script>
+let nodes = [], selected = null, dragging = null, dragOff = {x:0,y:0};
+const canvas = document.getElementById('mm-canvas');
+const svg    = document.getElementById('mm-svg');
+const COLORS = ['#3b82f6','#ef4444','#10b981','#8b5cf6','#f97316','#06b6d4','#ec4899','#f59e0b'];
+
+function loadMap() {
+  const saved = localStorage.getItem('savah:mindmap');
+  if (saved) { nodes = JSON.parse(saved); renderAll(); return; }
+  nodes = [{ id:1, text:'My Idea', x:350, y:260, parent:null, color:COLORS[0] }];
+  renderAll();
+}
+
+function saveMap() {
+  localStorage.setItem('savah:mindmap', JSON.stringify(nodes));
+  Toast.show('Mind map saved!', 'success', 1500);
+}
+
+function clearMap() {
+  if (!confirm('Clear the mind map?')) return;
+  nodes = [{ id:Date.now(), text:'Central Idea', x:350, y:260, parent:null, color:COLORS[0] }];
+  selected = null; renderAll();
+}
+
+function renderAll() {
+  // Clear old nodes
+  canvas.querySelectorAll('.mm-node').forEach(e => e.remove());
+  svg.innerHTML = '';
+  // Draw edges
+  nodes.forEach(n => {
+    if (n.parent === null) return;
+    const p = nodes.find(x => x.id === n.parent);
+    if (!p) return;
+    const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1', p.x + 60); line.setAttribute('y1', p.y + 18);
+    line.setAttribute('x2', n.x + 60); line.setAttribute('y2', n.y + 18);
+    line.setAttribute('stroke', n.color || COLORS[0]);
+    line.setAttribute('stroke-width','2');
+    line.setAttribute('opacity','0.5');
+    svg.appendChild(line);
+  });
+  // Draw nodes
+  nodes.forEach(n => {
+    const el = document.createElement('div');
+    el.className = 'mm-node' + (n.parent === null ? ' root' : '') + (selected === n.id ? ' selected' : '');
+    el.style.left = n.x + 'px';
+    el.style.top  = n.y + 'px';
+    el.style.background = n.color || COLORS[0];
+    el.style.color = '#fff';
+    el.textContent = n.text;
+    el.dataset.id  = n.id;
+    el.addEventListener('mousedown', startDrag);
+    el.addEventListener('dblclick', renameNode);
+    el.addEventListener('click', e => { e.stopPropagation(); selectNode(n.id); });
+    canvas.appendChild(el);
+  });
+}
+
+function selectNode(id) {
+  selected = id;
+  document.querySelectorAll('.mm-node').forEach(el => el.classList.toggle('selected', +el.dataset.id === id));
+}
+
+function addChild() {
+  if (!selected) { Toast.show('Select a node first', 'warning', 1500); return; }
+  const parent = nodes.find(n => n.id === selected);
+  const colorIdx = (nodes.filter(n=>n.parent===selected).length + COLORS.indexOf(parent.color)) % COLORS.length;
+  const offset = nodes.filter(n=>n.parent===selected).length;
+  const newNode = {
+    id: Date.now(),
+    text: 'New idea',
+    x: parent.x + 160,
+    y: parent.y + (offset - 1) * 60,
+    parent: selected,
+    color: COLORS[(colorIdx+1) % COLORS.length]
+  };
+  nodes.push(newNode);
+  renderAll();
+  selectNode(newNode.id);
+}
+
+function deleteSelected() {
+  if (!selected) { Toast.show('Select a node', 'warning', 1500); return; }
+  const target = nodes.find(n => n.id === selected);
+  if (!target) return;
+  if (target.parent === null && nodes.length === 1) { Toast.show('Cannot delete root node', 'warning'); return; }
+  // Delete node and its children recursively
+  function getIds(id) {
+    const children = nodes.filter(n => n.parent === id).map(n => n.id);
+    return [id, ...children.flatMap(c => getIds(c))];
+  }
+  const toRemove = getIds(selected);
+  nodes = nodes.filter(n => !toRemove.includes(n.id));
+  selected = null;
+  renderAll();
+}
+
+function renameNode(e) {
+  const id = +e.currentTarget.dataset.id;
+  const n  = nodes.find(x => x.id === id);
+  const newText = prompt('Rename node:', n.text);
+  if (newText !== null && newText.trim()) { n.text = newText.trim(); renderAll(); selectNode(id); }
+}
+
+function startDrag(e) {
+  e.preventDefault();
+  const id = +e.currentTarget.dataset.id;
+  selectNode(id);
+  dragging = id;
+  const n   = nodes.find(x => x.id === id);
+  const rect = canvas.getBoundingClientRect();
+  dragOff.x = e.clientX - rect.left - n.x;
+  dragOff.y = e.clientY - rect.top  - n.y;
+  window.addEventListener('mousemove', onDrag);
+  window.addEventListener('mouseup',   endDrag);
+}
+
+function onDrag(e) {
+  if (!dragging) return;
+  const n    = nodes.find(x => x.id === dragging);
+  const rect = canvas.getBoundingClientRect();
+  n.x = Math.max(0, Math.min(e.clientX - rect.left - dragOff.x, canvas.clientWidth - 120));
+  n.y = Math.max(0, Math.min(e.clientY - rect.top  - dragOff.y, canvas.clientHeight - 40));
+  renderAll();
+}
+
+function endDrag() {
+  dragging = null;
+  window.removeEventListener('mousemove', onDrag);
+  window.removeEventListener('mouseup', endDrag);
+}
+
+canvas.addEventListener('click', () => { selected = null; document.querySelectorAll('.mm-node').forEach(el => el.classList.remove('selected')); });
+
+loadMap();
+</script>
+</body></html>

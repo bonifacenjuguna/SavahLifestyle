@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="theme-color" content="#060810" media="(prefers-color-scheme: dark)"/>
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)"/>
+  <meta name="description" content="SavahLifestyle administration panel."/>
+  <meta name="keywords" content="productivity, lifestyle, wellness, tasks, focus, journal, SavahLifestyle"/>
+  <meta name="author" content="SavahLifestyle"/>
+  <meta name="robots" content="index, follow"/>
+  <meta property="og:title" content="Admin Panel — SavahLifestyle"/>
+  <meta property="og:description" content="SavahLifestyle administration panel."/>
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="SavahLifestyle"/>
+  <meta name="twitter:card" content="summary"/>
+  <meta name="twitter:title" content="Admin Panel — SavahLifestyle"/>
+  <meta name="twitter:description" content="SavahLifestyle administration panel."/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+  <meta name="apple-mobile-web-app-title" content="SavahLifestyle"/>
+  <title>Admin — SavahLifestyle</title>
+  <link rel="stylesheet" href="css/style.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <script src="js/app.js" defer></script>
+  <style>
+    body { display:flex; min-height:100vh; font-family:var(--font-body); background:var(--bg); }
+    #admin-login-screen {
+      position:fixed; inset:0; z-index:9999;
+      background:var(--bg); display:flex; align-items:center; justify-content:center;
+    }
+    .login-box {
+      background:var(--card); border:1px solid var(--glass-border);
+      border-radius:var(--radius-xl); padding:2.5rem 2rem; width:100%; max-width:380px;
+      box-shadow:0 0 60px rgba(59,130,246,0.12);
+    }
+    .login-box h2 { font-family:var(--font-head); font-size:1.5rem; font-weight:800; margin-bottom:0.25rem; }
+    .login-box .sub { color:var(--text-muted); font-size:0.85rem; margin-bottom:1.75rem; }
+    .login-err { background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.25); border-radius:var(--radius-sm); padding:0.65rem 0.9rem; font-size:0.82rem; color:var(--danger); margin-bottom:1rem; display:none; }
+    .sidebar {
+      width:240px; flex-shrink:0; position:fixed; top:0; left:0; height:100vh;
+      background:var(--bg2); border-right:1px solid var(--glass-border);
+      display:flex; flex-direction:column; z-index:200; transition:transform 0.3s ease; overflow-y:auto;
+    }
+    @media(max-width:900px) {
+      .sidebar { transform:translateX(-100%); }
+      .sidebar.open { transform:none; box-shadow:8px 0 30px rgba(0,0,0,0.5); }
+      .admin-main { margin-left:0!important; max-width:100vw!important; }
+    }
+    .sb-logo { padding:1.25rem 1.25rem 1rem; display:flex; align-items:center; gap:.55rem; border-bottom:1px solid var(--border); font-family:var(--font-head); font-size:1rem; font-weight:800; flex-shrink:0; }
+    .sb-logo svg { color:var(--blue); }
+    .sb-logo span { color:var(--blue); }
+    .sb-badge { font-size:.58rem; background:var(--danger); color:#fff; padding:1px 6px; border-radius:4px; margin-left:auto; font-weight:700; letter-spacing:.04em; }
+    .sb-nav { flex:1; padding:.5rem 0; }
+    .sb-section { font-size:.6rem; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:.12em; padding:.75rem 1.25rem .25rem; }
+    .sb-link {
+      display:flex; align-items:center; gap:.65rem;
+      padding:.6rem 1.25rem; color:var(--text-muted);
+      font-size:.84rem; font-weight:500; cursor:pointer;
+      border-left:3px solid transparent; text-decoration:none;
+      transition:var(--transition);
+    }
+    .sb-link:hover { color:var(--text); background:var(--card); }
+    .sb-link.active { color:var(--blue); border-left-color:var(--blue); background:var(--blue-dim); font-weight:600; }
+    .sb-link svg { flex-shrink:0; }
+    .sb-count { margin-left:auto; font-size:.68rem; background:var(--blue); color:#fff; padding:1px 7px; border-radius:20px; font-weight:700; }
+    .sb-user { padding:.9rem 1.25rem; border-top:1px solid var(--border); display:flex; align-items:center; gap:.65rem; flex-shrink:0; }
+    .sb-avatar { width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg,var(--blue),var(--purple)); display:flex; align-items:center; justify-content:center; font-size:.8rem; font-weight:800; color:#fff; flex-shrink:0; }
+    .sb-uname { font-size:.84rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .sb-urole { font-size:.7rem; color:var(--blue); }
+    .admin-main { margin-left:240px; flex:1; min-height:100vh; max-width:calc(100vw - 240px); overflow-x:hidden; }
+    .admin-top {
+      position:sticky; top:0; z-index:100;
+      height:58px; display:flex; align-items:center; justify-content:space-between;
+      padding:0 1.75rem;
+      background:rgba(6,8,16,0.92); backdrop-filter:blur(20px);
+      border-bottom:1px solid var(--border);
+    }
+    [data-theme="light"] .admin-top { background:rgba(240,244,255,0.92); }
+    .top-title { font-family:var(--font-head); font-size:.95rem; font-weight:700; display:flex; align-items:center; gap:.75rem; }
+    .live-pill { display:flex; align-items:center; gap:.35rem; font-size:.7rem; color:var(--success); background:rgba(34,197,94,.1); border:1px solid rgba(34,197,94,.2); padding:2px 8px; border-radius:20px; }
+    .live-dot { width:6px; height:6px; background:var(--success); border-radius:50%; animation:admpulse 2s infinite; }
+    @keyframes admpulse { 0%,100%{opacity:1;} 50%{opacity:.4;} }
+    .top-right { display:flex; align-items:center; gap:.75rem; }
+    .top-clock { font-family:var(--font-mono); font-size:.78rem; color:var(--text-muted); }
+    .mob-menu-btn { display:none; background:none; border:none; color:var(--text); cursor:pointer; padding:.4rem; }
+    @media(max-width:900px) { .mob-menu-btn { display:flex; align-items:center; } }
+    .admin-section { display:none; padding:1.75rem; animation:admFadeUp .3s ease both; }
+    .admin-section.active { display:block; }
+    @keyframes admFadeUp { from{opacity:0;transform:translateY(8px);} to{opacity:1;transform:none;} }
+    .stats-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(155px,1fr)); gap:1rem; margin-bottom:1.75rem; }
+    .stat-box { background:var(--card); border:1px solid var(--glass-border); border-radius:var(--radius); padding:1.1rem 1.25rem; backdrop-filter:blur(8px); }
+    .stat-box-label { font-size:.72rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:.06em; margin-bottom:.4rem; }
+    .stat-box-val { font-family:var(--font-head); font-size:1.6rem; font-weight:800; line-height:1; }
+    .stat-box-sub { font-size:.72rem; color:var(--text-muted); margin-top:.3rem; }
+    .charts-grid { display:grid; grid-template-columns:2fr 1fr; gap:1.25rem; margin-bottom:1.75rem; }
+    @media(max-width:1000px) { .charts-grid { grid-template-columns:1fr; } }
+    .chart-box { background:var(--card); border:1px solid var(--glass-border); border-radius:var(--radius); padding:1.5rem; backdrop-filter:blur(8px); }
+    .chart-box-title { font-family:var(--font-head); font-weight:700; font-size:.9rem; margin-bottom:1.25rem; display:flex; align-items:center; justify-content:space-between; gap:.5rem; flex-wrap:wrap; }
+    .table-box { background:var(--card); border:1px solid var(--glass-border); border-radius:var(--radius); overflow:hidden; margin-bottom:1.75rem; backdrop-filter:blur(8px); }
+    .table-head { padding:.9rem 1.25rem; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); gap:.75rem; flex-wrap:wrap; }
+    .table-head-title { font-family:var(--font-head); font-weight:700; font-size:.9rem; }
+    .tbl-search { padding:.4rem .8rem; background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text); font-family:var(--font-body); font-size:.84rem; outline:none; width:180px; }
+    .tbl-search:focus { border-color:var(--blue); }
+    .tbl-wrap { overflow-x:auto; }
+    .user-cell { display:flex; align-items:center; gap:.65rem; }
+    .u-avatar { width:28px; height:28px; border-radius:50%; background:linear-gradient(135deg,var(--blue),var(--purple)); display:flex; align-items:center; justify-content:center; font-size:.7rem; font-weight:800; color:#fff; flex-shrink:0; }
+    .muted { color:var(--text-muted); font-size:.8rem; }
+    .mono { font-family:var(--font-mono); font-size:.78rem; }
+    .badge-admin { background:rgba(239,68,68,.12); color:var(--danger); border:1px solid rgba(239,68,68,.25); font-size:.65rem; padding:2px 7px; border-radius:4px; font-weight:700; }
+    .badge-user  { background:var(--blue-dim); color:var(--blue); border:1px solid var(--blue-border); font-size:.65rem; padding:2px 7px; border-radius:4px; font-weight:700; }
+    .badge-active { background:rgba(34,197,94,.12); color:var(--success); border:1px solid rgba(34,197,94,.25); font-size:.65rem; padding:2px 7px; border-radius:4px; font-weight:700; }
+    .badge-inactive { background:rgba(148,163,184,.1); color:var(--text-muted); border:1px solid var(--border); font-size:.65rem; padding:2px 7px; border-radius:4px; font-weight:700; }
+    .api-key-row { display:flex; align-items:center; gap:.75rem; padding:.9rem; background:var(--bg2); border-radius:var(--radius-sm); margin-bottom:.65rem; flex-wrap:wrap; }
+    .api-key-label { font-size:.82rem; font-weight:600; min-width:180px; }
+    .api-key-val { flex:1; font-family:var(--font-mono); font-size:.75rem; color:var(--text-muted); background:var(--bg3); border:1px solid var(--border); border-radius:6px; padding:.35rem .65rem; word-break:break-all; cursor:pointer; min-width:100px; }
+    .api-key-val:hover { border-color:var(--blue); color:var(--text); }
+    .key-actions { display:flex; gap:.4rem; }
+    .setting-row { display:flex; align-items:center; justify-content:space-between; padding:.9rem 0; border-bottom:1px solid var(--border); gap:1rem; flex-wrap:wrap; }
+    .setting-row:last-child { border-bottom:none; }
+    .setting-label { font-size:.88rem; font-weight:600; }
+    .setting-desc { font-size:.75rem; color:var(--text-muted); margin-top:.1rem; }
+    .toggle-sw { position:relative; width:44px; height:24px; flex-shrink:0; }
+    .toggle-sw input { opacity:0; width:0; height:0; }
+    .tog-slider { position:absolute; cursor:pointer; inset:0; background:var(--border); border-radius:24px; transition:.3s; }
+    .tog-slider:before { position:absolute; content:''; height:18px; width:18px; left:3px; bottom:3px; background:#fff; border-radius:50%; transition:.3s; }
+    .toggle-sw input:checked + .tog-slider { background:var(--blue); }
+    .toggle-sw input:checked + .tog-slider:before { transform:translateX(20px); }
+    .activity-feed { display:flex; flex-direction:column; gap:.5rem; max-height:380px; overflow-y:auto; }
+    .activity-item { display:flex; align-items:flex-start; gap:.75rem; padding:.65rem; background:var(--bg2); border-radius:var(--radius-sm); }
+    .activity-icon { width:30px; height:30px; border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:1rem; }
+    .activity-text { font-size:.82rem; line-height:1.4; }
+    .activity-time { font-size:.72rem; color:var(--text-muted); margin-top:.15rem; }
+    .page-list { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:.75rem; }
+    .page-card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:.85rem; transition:var(--transition); }
+    .page-card:hover { border-color:var(--blue); }
+    .page-card-title { font-size:.84rem; font-weight:700; margin-bottom:.25rem; display:flex; align-items:center; gap:.4rem; }
+    .page-card-url { font-family:var(--font-mono); font-size:.68rem; color:var(--text-muted); }
+    .page-status { display:inline-block; width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+    .page-status.live { background:var(--success); }
+    .page-status.stub { background:var(--warning); }
+    .sys-grid { display:grid; grid-template-columns:1fr 1fr; gap:.75rem; }
+    .sys-item { background:var(--bg2); border-radius:var(--radius-sm); padding:.8rem 1rem; }
+    .sys-item-label { font-size:.7rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:.06em; margin-bottom:.2rem; }
+    .sys-item-val { font-family:var(--font-mono); font-size:.85rem; font-weight:600; word-break:break-all; }
+    .adm-modal { position:fixed; inset:0; z-index:500; background:rgba(0,0,0,0.7); backdrop-filter:blur(4px); display:none; align-items:center; justify-content:center; padding:1rem; }
+    .adm-modal.open { display:flex; }
+    .adm-modal-box { background:var(--card); border:1px solid var(--glass-border); border-radius:var(--radius); padding:1.75rem; width:100%; max-width:460px; }
+    .quick-grid { display:grid; grid-template-columns:1fr 1fr; gap:.65rem; }
+    @media(max-width:600px) { .quick-grid { grid-template-columns:1fr; } }
+    .two-col { display:grid; grid-template-columns:1fr 1fr; gap:1.25rem; }
+    @media(max-width:800px) { .two-col { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+
+<!-- Login Screen -->
+<div id="admin-login-screen">
+  <div class="login-box">
+    <div style="display:flex;align-items:center;gap:.65rem;margin-bottom:1.5rem">
+      <div style="width:42px;height:42px;background:linear-gradient(135deg,var(--blue),var(--purple));border-radius:12px;display:flex;align-items:center;justify-content:center">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+      </div>
+      <div>
+        <div style="font-family:var(--font-head);font-size:1.1rem;font-weight:800">Savah<span style="color:var(--blue)">Lifestyle</span></div>
+        <div style="font-size:.72rem;color:var(--text-muted)">Admin Portal · Restricted</div>
+      </div>
+    </div>
+    <h2>Admin Sign In</h2>
+    <p class="sub">Authorised personnel only</p>
+    <div class="login-err" id="admin-err"></div>
+    <div class="form-group">
+      <label class="form-label">Email or Username</label>
+      <input type="text" class="form-input" id="adm-user" placeholder="Email or username" autocomplete="username"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input type="password" class="form-input" id="adm-pass" placeholder="••••••••" autocomplete="current-password"/>
+    </div>
+    <button class="btn btn-primary" style="width:100%;margin-top:.5rem" onclick="adminLogin()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+      Access Admin Dashboard
+    </button>
+    <p style="text-align:center;font-size:.78rem;color:var(--text-muted);margin-top:1rem">
+      <a href="index.html" style="color:var(--text-muted)">← Back to Site</a>
+    </p>
+  </div>
+</div>
+
+<!-- Sidebar -->
+<nav class="sidebar" id="sidebar">
+  <div class="sb-logo">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+    Savah<span>Admin</span>
+    <span class="sb-badge">ADMIN</span>
+  </div>
+  <div class="sb-nav">
+    <div class="sb-section">Main</div>
+    <div class="sb-link active" onclick="showSec('overview',this)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Overview
+    </div>
+    <div class="sb-link" onclick="showSec('users',this)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Users
+      <span class="sb-count" id="sb-user-count">0</span>
+    </div>
+    <div class="sb-link" onclick="showSec('pages',this)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Pages
+    </div>
+    <div class="sb-link" onclick="showSec('activity',this)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Activity
+    </div>
+    <div class="sb-section">Config</div>
+    <div class="sb-link" onclick="showSec('apikeys',this)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+      API Keys
+    </div>
+    <div class="sb-link" onclick="showSec('settings',this)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+      Settings
+    </div>
+    <div class="sb-link" onclick="showSec('notifications',this)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      Notifications
+    </div>
+    <div class="sb-section">System</div>
+    <div class="sb-link" onclick="showSec('system',this)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      System Info
+    </div>
+    <div class="sb-section">Access</div>
+    <a href="index.html" class="sb-link">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      View Site
+    </a>
+    <div class="sb-link" onclick="adminLogout()" style="color:var(--danger)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Sign Out
+    </div>
+  </div>
+  <div class="sb-user">
+    <div class="sb-avatar">BN</div>
+    <div style="overflow:hidden">
+      <div class="sb-uname">bonifacenjuguna</div>
+      <div class="sb-urole">Super Admin</div>
+    </div>
+  </div>
+</nav>
+
+<!-- Main -->
+<div class="admin-main">
+  <div class="admin-top">
+    <div class="top-title">
+      <button class="mob-menu-btn" onclick="document.getElementById('sidebar').classList.toggle('open')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <span id="section-title">Overview</span>
+      <span class="live-pill"><span class="live-dot"></span>Live</span>
+    </div>
+    <div class="top-right">
+      <span class="top-clock" id="admin-clock">--:--:--</span>
+      <button class="theme-toggle" id="theme-toggle" style="width:36px;height:36px;border-radius:8px;background:var(--card);border:1px solid var(--border);color:var(--text-muted);cursor:pointer;display:flex;align-items:center;justify-content:center"></button>
+    </div>
+  </div>
+
+  <!-- OVERVIEW -->
+  <section class="admin-section active" id="sec-overview">
+    <div class="stats-row" id="overview-stats"></div>
+    <div class="charts-grid">
+      <div class="chart-box">
+        <div class="chart-box-title">
+          Activity — Last 7 Days
+          <select id="chart-metric" onchange="renderActChart()" style="font-size:.75rem;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:3px 8px;color:var(--text);outline:none">
+            <option>Tasks</option><option>Expenses</option><option>Sessions</option>
+          </select>
+        </div>
+        <div style="height:190px"><canvas id="act-chart"></canvas></div>
+      </div>
+      <div class="chart-box">
+        <div class="chart-box-title">Feature Usage</div>
+        <div style="height:190px"><canvas id="feat-chart"></canvas></div>
+      </div>
+    </div>
+    <div class="two-col">
+      <div class="chart-box">
+        <div class="chart-box-title">Recent Users</div>
+        <div id="recent-users"></div>
+      </div>
+      <div class="chart-box">
+        <div class="chart-box-title">Quick Actions</div>
+        <div class="quick-grid">
+          <button class="btn btn-secondary" style="font-size:.8rem" onclick="showSec('users',null)">👤 Users</button>
+          <button class="btn btn-secondary" style="font-size:.8rem" onclick="showSec('apikeys',null)">🔑 API Keys</button>
+          <button class="btn btn-secondary" style="font-size:.8rem" onclick="exportAllData()">📥 Export</button>
+          <button class="btn btn-secondary" style="font-size:.8rem" onclick="sendBroadcast()">📢 Broadcast</button>
+          <button class="btn btn-secondary" style="font-size:.8rem" onclick="showSec('settings',null)">⚙️ Settings</button>
+          <button class="btn btn-secondary" style="font-size:.8rem" onclick="showSec('system',null)">🖥️ System</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- USERS -->
+  <section class="admin-section" id="sec-users">
+    <div class="stats-row" id="user-stats-row"></div>
+    <div class="table-box">
+      <div class="table-head">
+        <div class="table-head-title">All Users</div>
+        <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+          <input class="tbl-search" id="user-search" placeholder="Search…" oninput="renderUsers(this.value)"/>
+          <button class="btn btn-primary btn-sm" onclick="openAddUser()">+ Add User</button>
+          <button class="btn btn-secondary btn-sm" onclick="exportUsersCSV()">Export CSV</button>
+        </div>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>User</th><th>Role</th><th>Status</th><th>Joined</th><th>Last Active</th><th>Actions</th></tr></thead>
+          <tbody id="users-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- PAGES -->
+  <section class="admin-section" id="sec-pages">
+    <div class="chart-box">
+      <div class="chart-box-title">
+        All Site Pages
+        <div style="display:flex;gap:.5rem;align-items:center;font-size:.75rem;font-weight:400;color:var(--text-muted)">
+          <span style="display:flex;align-items:center;gap:.3rem"><span style="display:inline-block;width:8px;height:8px;background:var(--success);border-radius:50%"></span>Live</span>
+          <span style="display:flex;align-items:center;gap:.3rem"><span style="display:inline-block;width:8px;height:8px;background:var(--warning);border-radius:50%"></span>Stub</span>
+        </div>
+      </div>
+      <div class="page-list" id="page-list"></div>
+    </div>
+  </section>
+
+  <!-- ACTIVITY -->
+  <section class="admin-section" id="sec-activity">
+    <div class="two-col">
+      <div class="chart-box">
+        <div class="chart-box-title">Live Feed</div>
+        <div class="activity-feed" id="act-feed"></div>
+      </div>
+      <div class="chart-box">
+        <div class="chart-box-title">Summary</div>
+        <div id="act-summary"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- API KEYS -->
+  <section class="admin-section" id="sec-apikeys">
+    <div class="chart-box" style="margin-bottom:1.25rem">
+      <div class="chart-box-title">
+        API Keys & Integrations
+        <span style="font-size:.72rem;color:var(--text-muted);font-weight:400">Stored in localStorage</span>
+      </div>
+      <div id="api-keys-list"></div>
+      <div style="margin-top:1rem;padding:.85rem;background:rgba(59,130,246,0.06);border:1px solid var(--blue-border);border-radius:var(--radius-sm)">
+        <div style="font-size:.82rem;color:var(--blue);font-weight:600;margin-bottom:.3rem">🔒 Security Note</div>
+        <div style="font-size:.77rem;color:var(--text-muted)">API keys are stored client-side. For production use, secure server-side key management is strongly recommended.</div>
+      </div>
+    </div>
+    <div class="chart-box">
+      <div class="chart-box-title">Add / Update Key</div>
+      <div class="two-col" style="gap:.85rem">
+        <div class="form-group">
+          <label class="form-label">Service</label>
+          <select class="form-input" id="new-key-svc" onchange="toggleCustomKeyName()">
+            <option value="openweather">OpenWeather API</option>
+            <option value="google_client_id">Google OAuth Client ID</option>
+            <option value="facebook_app_id">Facebook App ID</option>
+            <option value="exchange_rate">Exchange Rate API</option>
+            <option value="maps_api">Google Maps API</option>
+            <option value="coingecko">CoinGecko API</option>
+            <option value="news_api">News API</option>
+            <option value="custom">Custom…</option>
+          </select>
+        </div>
+        <div class="form-group" id="custom-name-wrap" style="display:none">
+          <label class="form-label">Key Name</label>
+          <input type="text" class="form-input" id="custom-key-nm" placeholder="my_api_key"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Value</label>
+        <input type="text" class="form-input" id="new-key-val" placeholder="Paste API key here"/>
+      </div>
+      <button class="btn btn-primary" onclick="saveApiKey()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Save API Key
+      </button>
+    </div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section class="admin-section" id="sec-settings">
+    <div class="two-col">
+      <div class="chart-box">
+        <div class="chart-box-title">Site Configuration</div>
+        <div class="form-group"><label class="form-label">Site Name</label><input type="text" class="form-input" id="cfg-name" value="SavahLifestyle"/></div>
+        <div class="form-group"><label class="form-label">Contact Email</label><input type="email" class="form-input" id="cfg-email" value="njugunaboniface211@gmail.com"/></div>
+        <div class="form-group"><label class="form-label">Default Currency</label>
+          <select class="form-input" id="cfg-cur">
+            <option value="KES">KES — Kenyan Shilling</option>
+            <option value="USD">USD — US Dollar</option>
+            <option value="EUR">EUR — Euro</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="saveSiteCfg()">Save Configuration</button>
+      </div>
+      <div class="chart-box">
+        <div class="chart-box-title">Feature Toggles</div>
+        <div id="feat-toggles"></div>
+      </div>
+      <div class="chart-box">
+        <div class="chart-box-title">Change Admin Password</div>
+        <div class="form-group"><label class="form-label">Current Password</label><input type="password" class="form-input" id="pw-cur"/></div>
+        <div class="form-group"><label class="form-label">New Password</label><input type="password" class="form-input" id="pw-new"/></div>
+        <div class="form-group"><label class="form-label">Confirm New</label><input type="password" class="form-input" id="pw-conf"/></div>
+        <button class="btn btn-primary" onclick="changePass()">Update Password</button>
+      </div>
+      <div class="chart-box">
+        <div class="chart-box-title" style="color:var(--danger)">⚠️ Danger Zone</div>
+        <div style="display:flex;flex-direction:column;gap:.75rem">
+          <button class="btn btn-secondary" onclick="exportAllData()" style="text-align:left">
+            📥 Export All Data (JSON)
+          </button>
+          <button class="btn btn-secondary" onclick="clearAppData()" style="border-color:var(--warning);color:var(--warning);text-align:left">
+            🗑️ Clear All App Data
+          </button>
+          <button class="btn btn-secondary" onclick="nukeEverything()" style="border-color:var(--danger);color:var(--danger);text-align:left">
+            💣 Factory Reset (All localStorage)
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- NOTIFICATIONS -->
+  <section class="admin-section" id="sec-notifications">
+    <div class="two-col">
+      <div class="chart-box">
+        <div class="chart-box-title">Send Notification</div>
+        <div class="form-group"><label class="form-label">Message</label><textarea class="form-input" id="notif-msg" rows="3" placeholder="Enter notification message…" style="resize:vertical"></textarea></div>
+        <div class="form-group"><label class="form-label">Type</label>
+          <select class="form-input" id="notif-type">
+            <option value="info">ℹ️ Info</option>
+            <option value="success">✅ Success</option>
+            <option value="warning">⚠️ Warning</option>
+            <option value="error">🚨 Alert</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="sendAdminNotif()">Send Notification</button>
+      </div>
+      <div class="chart-box">
+        <div class="chart-box-title">History</div>
+        <div id="notif-hist" style="max-height:360px;overflow-y:auto"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SYSTEM -->
+  <section class="admin-section" id="sec-system">
+    <div class="stats-row" id="sys-stats"></div>
+    <div class="two-col">
+      <div class="chart-box">
+        <div class="chart-box-title">Environment</div>
+        <div class="sys-grid" id="sys-env"></div>
+      </div>
+      <div class="chart-box">
+        <div class="chart-box-title">Storage Breakdown</div>
+        <div id="sys-storage"></div>
+      </div>
+      <div class="chart-box" style="grid-column:1/-1">
+        <div class="chart-box-title">
+          localStorage Inspector
+          <button class="btn btn-secondary btn-sm" onclick="renderSystem()">🔄 Refresh</button>
+        </div>
+        <div id="ls-inspector" style="max-height:280px;overflow-y:auto"></div>
+      </div>
+    </div>
+  </section>
+</div><!-- /admin-main -->
+
+<!-- Add User Modal -->
+<div class="adm-modal" id="add-user-modal">
+  <div class="adm-modal-box">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem">
+      <div style="font-family:var(--font-head);font-weight:700;font-size:1rem">Add New User</div>
+      <button onclick="closeModal()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1.4rem;line-height:1">×</button>
+    </div>
+    <div class="form-group"><label class="form-label">Full Name</label><input type="text" class="form-input" id="nu-name"/></div>
+    <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="nu-email"/></div>
+    <div class="form-group"><label class="form-label">Username</label><input type="text" class="form-input" id="nu-uname"/></div>
+    <div class="form-group"><label class="form-label">Role</label>
+      <select class="form-input" id="nu-role"><option value="user">User</option><option value="admin">Admin</option></select>
+    </div>
+    <div style="display:flex;gap:.75rem;margin-top:1rem">
+      <button class="btn btn-secondary" style="flex:1" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" style="flex:1" onclick="saveNewUser()">Add User</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ════ ADMIN AUTH ════ */
+const ADMIN = {
+  emails: ['njugunaboniface211@gmail.com'],
+  usernames: ['bonifacenjuguna'],
+  get password() { return localStorage.getItem('sl:admin:pw') || 'Bonniyohh_2301'; }
+};
+
+function adminLogin() {
+  const u = document.getElementById('adm-user').value.trim();
+  const p = document.getElementById('adm-pass').value;
+  const err = document.getElementById('admin-err');
+  if ((ADMIN.emails.includes(u) || ADMIN.usernames.includes(u)) && p === ADMIN.password) {
+    localStorage.setItem('sl:admin:session', JSON.stringify({ ts: Date.now(), user: u }));
+    document.getElementById('admin-login-screen').style.display = 'none';
+    err.style.display = 'none';
+    initAdmin();
+  } else {
+    err.style.display = 'block';
+    err.textContent = 'Invalid credentials — access denied.';
+  }
+}
+
+function adminLogout() {
+  localStorage.removeItem('sl:admin:session');
+  window.location.href = 'index.html';
+}
+
+function checkAuth() {
+  const s = JSON.parse(localStorage.getItem('sl:admin:session') || 'null');
+  return s && (Date.now() - s.ts) < 8 * 3600 * 1000;
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('admin-login-screen').style.display !== 'none') adminLogin();
+});
+setInterval(() => { const c = document.getElementById('admin-clock'); if(c) c.textContent = new Date().toLocaleTimeString(); }, 1000);
+
+/* ════ SECTION NAV ════ */
+const SECTION_NAMES = { overview:'Overview', users:'Users', pages:'Pages', activity:'Activity', apikeys:'API Keys', settings:'Settings', notifications:'Notifications', system:'System Info' };
+
+function showSec(id, el) {
+  document.querySelectorAll('.admin-section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.sb-link').forEach(l=>l.classList.remove('active'));
+  const sec = document.getElementById('sec-'+id);
+  if (sec) sec.classList.add('active');
+  if (el) el.classList.add('active');
+  document.getElementById('section-title').textContent = SECTION_NAMES[id] || id;
+  document.getElementById('sidebar').classList.remove('open');
+  const renderers = { users:()=>renderUsers(''), pages:renderPages, apikeys:renderApiKeys, settings:renderSettings, system:renderSystem, activity:renderActivity, notifications:renderNotifs };
+  if (renderers[id]) renderers[id]();
+}
+
+/* ════ DATA HELPERS ════ */
+function getUsers() {
+  const stored = JSON.parse(localStorage.getItem('sl:users') || '[]');
+  const admin = { id:'admin-001', name:'Boniface Njuguna Wainaina', username:'bonifacenjuguna', email:'njugunaboniface211@gmail.com', role:'admin', status:'active', joined:'2024-01-01', lastActive: new Date().toISOString().split('T')[0] };
+  return [admin, ...stored.filter(u=>u.email!==admin.email)];
+}
+function colorFromStr(s) {
+  const c=['#3b82f6','#10b981','#8b5cf6','#f59e0b','#ef4444','#06b6d4','#ec4899'];
+  let h=0; for(let ch of(s||'')) h=ch.charCodeAt(0)+((h<<5)-h);
+  return c[Math.abs(h)%c.length];
+}
+function getLSBytes() {
+  let t=0; for(let k in localStorage) if(localStorage.hasOwnProperty(k)) t+=(k.length+(localStorage[k]||'').length)*2;
+  return t;
+}
+
+/* ════ OVERVIEW ════ */
+function renderOverview() {
+  const users = getUsers();
+  const tasks = JSON.parse(localStorage.getItem('savah:todos')||'[]');
+  const expenses = JSON.parse(localStorage.getItem('savah:expenses')||'[]');
+  const habits = JSON.parse(localStorage.getItem('savah:habits')||'[]');
+  document.getElementById('sb-user-count').textContent = users.length;
+  document.getElementById('overview-stats').innerHTML = [
+    {l:'Total Users', v:users.length, c:'var(--blue)'},
+    {l:'Tasks', v:tasks.length, c:'var(--success)'},
+    {l:'Expenses', v:expenses.length, c:'var(--warning)'},
+    {l:'Habits', v:habits.length, c:'var(--purple)'},
+    {l:'Pages', v:29, c:'var(--cyan)'},
+    {l:'Storage', v:Math.round(getLSBytes()/1024)+' KB', c:'var(--orange)'},
+  ].map(s=>`<div class="stat-box"><div class="stat-box-label">${s.l}</div><div class="stat-box-val" style="color:${s.c}">${s.v}</div></div>`).join('');
+
+  document.getElementById('recent-users').innerHTML = users.slice(0,5).map(u=>`
+    <div style="display:flex;align-items:center;gap:.65rem;padding:.55rem 0;border-bottom:1px solid var(--border)">
+      <div class="u-avatar" style="background:${colorFromStr(u.username)}">${(u.name||u.username||'?')[0].toUpperCase()}</div>
+      <div style="flex:1;overflow:hidden">
+        <div style="font-size:.84rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${u.name||u.username}</div>
+        <div class="muted" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${u.email||'—'}</div>
+      </div>
+      <span class="badge-${u.role==='admin'?'admin':'user'}">${u.role||'user'}</span>
+    </div>`).join('');
+  renderActChart(); renderFeatChart();
+}
+
+function renderActChart() {
+  const ctx = document.getElementById('act-chart'); if(!ctx) return;
+  const days = Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-(6-i));return d.toLocaleDateString('en',{weekday:'short'});});
+  const data = days.map(()=>Math.floor(Math.random()*18)+1);
+  if(window._actC) window._actC.destroy();
+  window._actC = new Chart(ctx,{type:'line',data:{labels:days,datasets:[{label:'Activity',data,borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,0.12)',tension:0.4,fill:true,pointRadius:3,pointBackgroundColor:'#3b82f6'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#64748b'},grid:{color:'rgba(255,255,255,0.04)'}},y:{ticks:{color:'#64748b'},grid:{color:'rgba(255,255,255,0.04)'}}}}});
+}
+function renderFeatChart() {
+  const ctx = document.getElementById('feat-chart'); if(!ctx) return;
+  const feats=['Todo','Habits','Expenses','Journal','Focus','Calc','Weather'];
+  const vals=feats.map(()=>Math.floor(Math.random()*80)+10);
+  if(window._featC) window._featC.destroy();
+  window._featC = new Chart(ctx,{type:'doughnut',data:{labels:feats,datasets:[{data:vals,backgroundColor:['#3b82f6','#10b981','#f59e0b','#8b5cf6','#ef4444','#06b6d4','#f97316'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#94a3b8',font:{size:10},boxWidth:10}}}}});
+}
+
+/* ════ USERS ════ */
+function renderUsers(q) {
+  const users = getUsers();
+  document.getElementById('sb-user-count').textContent = users.length;
+  const admins = users.filter(u=>u.role==='admin').length;
+  document.getElementById('user-stats-row').innerHTML = [
+    {l:'Total',v:users.length,c:'var(--blue)'},
+    {l:'Admins',v:admins,c:'var(--danger)'},
+    {l:'Regular',v:users.length-admins,c:'var(--success)'},
+    {l:'Active',v:users.filter(u=>u.status!=='suspended').length,c:'var(--text-muted)'},
+  ].map(s=>`<div class="stat-box"><div class="stat-box-label">${s.l}</div><div class="stat-box-val" style="color:${s.c}">${s.v}</div></div>`).join('');
+  const filtered = q ? users.filter(u=>(u.name+u.username+u.email).toLowerCase().includes(q.toLowerCase())) : users;
+  document.getElementById('users-tbody').innerHTML = filtered.map(u=>`
+    <tr>
+      <td><div class="user-cell"><div class="u-avatar" style="background:${colorFromStr(u.username)}">${(u.name||u.username||'?')[0].toUpperCase()}</div><div><div style="font-weight:600;font-size:.84rem">${u.name||'—'}</div><div class="muted mono">${u.email||'—'}</div></div></div></td>
+      <td><span class="badge-${u.role==='admin'?'admin':'user'}">${u.role||'user'}</span></td>
+      <td><span class="badge-${u.status==='active'||!u.status?'active':'inactive'}">${u.status||'active'}</span></td>
+      <td class="muted">${u.joined||'—'}</td>
+      <td class="muted">${u.lastActive||'—'}</td>
+      <td><div style="display:flex;gap:.4rem">${u.id!=='admin-001'?`<button class="btn btn-secondary btn-sm" onclick="deleteUser('${u.id}')" style="color:var(--danger);font-size:.75rem">Delete</button>`:'<span style="font-size:.72rem;color:var(--text-muted)">Protected</span>'}</div></td>
+    </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:2rem">No users found</td></tr>';
+}
+function openAddUser() { document.getElementById('add-user-modal').classList.add('open'); }
+function closeModal() { document.getElementById('add-user-modal').classList.remove('open'); }
+function saveNewUser() {
+  const name=document.getElementById('nu-name').value.trim();
+  const email=document.getElementById('nu-email').value.trim();
+  const uname=document.getElementById('nu-uname').value.trim();
+  const role=document.getElementById('nu-role').value;
+  if(!name||!email){Toast.show('Name and email required','error');return;}
+  const users=JSON.parse(localStorage.getItem('sl:users')||'[]');
+  users.push({id:'u-'+Date.now(),name,email,username:uname||email.split('@')[0],role,status:'active',joined:new Date().toISOString().split('T')[0],lastActive:new Date().toISOString().split('T')[0]});
+  localStorage.setItem('sl:users',JSON.stringify(users));
+  closeModal(); renderUsers('');
+  Toast.show('User added','success');
+}
+function deleteUser(id) {
+  if(!confirm('Delete this user? This cannot be undone.')) return;
+  let users=JSON.parse(localStorage.getItem('sl:users')||'[]');
+  users=users.filter(u=>u.id!==id);
+  localStorage.setItem('sl:users',JSON.stringify(users));
+  renderUsers(''); Toast.show('User deleted','success');
+}
+function exportUsersCSV() {
+  const users=getUsers();
+  const csv=['Name,Username,Email,Role,Status,Joined',...users.map(u=>`"${u.name}","${u.username}","${u.email}","${u.role}","${u.status}","${u.joined}"`)].join('\n');
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download='users.csv'; a.click();
+  Toast.show('Exported','success');
+}
+
+/* ════ PAGES ════ */
+function renderPages() {
+  const pages=[
+    {n:'Dashboard',u:'index.html',s:'live',i:'🏠'},{n:'Login',u:'login.html',s:'live',i:'🔐'},
+    {n:'Admin',u:'admin.html',s:'live',i:'⚙️'},{n:'Todo',u:'todo.html',s:'live',i:'✅'},
+    {n:'Habits',u:'habits.html',s:'live',i:'🔄'},{n:'Expenses',u:'expenses.html',s:'live',i:'💰'},
+    {n:'Journal',u:'journal.html',s:'live',i:'📓'},{n:'Goals',u:'goals.html',s:'live',i:'🎯'},
+    {n:'Focus',u:'focus.html',s:'live',i:'🎧'},{n:'Calculator',u:'calculator.html',s:'live',i:'🔢'},
+    {n:'Weather',u:'weather.html',s:'live',i:'🌤️'},{n:'Music',u:'music.html',s:'live',i:'🎵'},
+    {n:'Calendar',u:'calendar.html',s:'live',i:'📅'},{n:'Password Gen',u:'passwordgen.html',s:'live',i:'🔑'},
+    {n:'Countdown',u:'countdown.html',s:'live',i:'⏱️'},{n:'Timezone',u:'timezone.html',s:'live',i:'🌍'},
+    {n:'Quick Links',u:'quicklinks.html',s:'live',i:'🔗'},{n:'Motivation',u:'motivation.html',s:'live',i:'✨'},
+    {n:'Brain Dump',u:'braindump.html',s:'live',i:'🧠'},{n:'Quick Calcs',u:'quickcalculators.html',s:'live',i:'📊'},
+    {n:'Mood Tracker',u:'moodtracker.html',s:'stub',i:'😊'},{n:'Sleep Tracker',u:'sleeptracker.html',s:'stub',i:'😴'},
+    {n:'Water Tracker',u:'watertracker.html',s:'stub',i:'💧'},{n:'Body Metrics',u:'bodymetrics.html',s:'stub',i:'📏'},
+    {n:'About',u:'about.html',s:'live',i:'ℹ️'},{n:'Contact',u:'contact.html',s:'live',i:'📧'},
+    {n:'FAQ',u:'faq.html',s:'live',i:'❓'},{n:'Privacy',u:'privacy.html',s:'live',i:'🔒'},{n:'Terms',u:'terms.html',s:'live',i:'📋'},
+  ];
+  document.getElementById('page-list').innerHTML = pages.map(p=>`
+    <div class="page-card">
+      <div class="page-card-title"><span class="page-status ${p.s}"></span>${p.i} ${p.n}</div>
+      <div class="page-card-url">${p.u}</div>
+      <div style="display:flex;gap:.4rem;margin-top:.6rem">
+        <a href="${p.u}" target="_blank" class="btn btn-secondary btn-sm" style="font-size:.7rem;padding:.25rem .6rem">View</a>
+        <span style="font-size:.7rem;padding:.25rem .5rem;border-radius:4px;color:${p.s==='live'?'var(--success)':'var(--warning)'};background:${p.s==='live'?'rgba(34,197,94,0.1)':'rgba(245,158,11,0.1)'}">${p.s.toUpperCase()}</span>
+      </div>
+    </div>`).join('');
+}
+
+/* ════ API KEYS ════ */
+const API_KEYS = [
+  {id:'openweather',l:'OpenWeather API',h:'openweathermap.org/api',i:'🌤️'},
+  {id:'google_client_id',l:'Google OAuth Client ID',h:'console.cloud.google.com',i:'🔵'},
+  {id:'facebook_app_id',l:'Facebook App ID',h:'developers.facebook.com',i:'🔷'},
+  {id:'exchange_rate',l:'Exchange Rate API',h:'exchangerate-api.com',i:'💱'},
+  {id:'maps_api',l:'Google Maps API',h:'console.cloud.google.com',i:'🗺️'},
+  {id:'coingecko',l:'CoinGecko API',h:'coingecko.com/api',i:'🪙'},
+  {id:'news_api',l:'News API',h:'newsapi.org',i:'📰'},
+];
+function renderApiKeys() {
+  document.getElementById('api-keys-list').innerHTML = API_KEYS.map(k=>{
+    const v=localStorage.getItem('sl:'+k.id)||'';
+    return `<div class="api-key-row">
+      <div style="flex-shrink:0">
+        <div class="api-key-label">${k.i} ${k.l}</div>
+        <div style="font-size:.72rem;color:var(--text-muted)">${k.h}</div>
+      </div>
+      <div class="api-key-val" title="Click to copy" onclick="cpKey('${k.id}')">${v?maskKey(v):'— not set —'}</div>
+      <div class="key-actions">
+        <button class="btn btn-secondary btn-sm" onclick="editKey('${k.id}')" style="font-size:.78rem">✏️ Edit</button>
+        ${v?`<button class="btn btn-secondary btn-sm" onclick="rmKey('${k.id}')" style="color:var(--danger);font-size:.78rem">🗑️</button>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+function maskKey(k){return k.length<=8?'••••••••':k.slice(0,4)+'••••••••'+k.slice(-4);}
+function cpKey(id){const v=localStorage.getItem('sl:'+id)||'';if(!v)return;navigator.clipboard.writeText(v).then(()=>Toast.show('Copied!','success'));}
+function editKey(id){const c=localStorage.getItem('sl:'+id)||'';const v=prompt('New value for '+id+':',c);if(v!==null){localStorage.setItem('sl:'+id,v);renderApiKeys();Toast.show('Updated','success');}}
+function rmKey(id){if(!confirm('Remove key '+id+'?'))return;localStorage.removeItem('sl:'+id);renderApiKeys();Toast.show('Removed','success');}
+function toggleCustomKeyName(){document.getElementById('custom-name-wrap').style.display=document.getElementById('new-key-svc').value==='custom'?'block':'none';}
+function saveApiKey(){
+  const svc=document.getElementById('new-key-svc').value;
+  const v=document.getElementById('new-key-val').value.trim();
+  if(!v){Toast.show('Enter a value','error');return;}
+  const k=svc==='custom'?(document.getElementById('custom-key-nm').value.trim()||'custom_key'):svc;
+  localStorage.setItem('sl:'+k,v);
+  document.getElementById('new-key-val').value='';
+  renderApiKeys(); Toast.show('Key saved: sl:'+k,'success');
+}
+
+/* ════ SETTINGS ════ */
+function renderSettings() {
+  const feats=[
+    {id:'weather',l:'Weather Widget',d:'Show weather on dashboard'},
+    {id:'music',l:'Music Player',d:'Enable focus music feature'},
+    {id:'notifications',l:'Notifications',d:'In-app notifications'},
+    {id:'bg_anim',l:'Background Animation',d:'Matrix droplet animation'},
+    {id:'ai',l:'AI Suggestions',d:'AI-powered insights & tips'},
+    {id:'analytics',l:'Analytics',d:'Usage tracking'},
+  ];
+  document.getElementById('feat-toggles').innerHTML = feats.map(f=>{
+    const on=localStorage.getItem('sl:feat:'+f.id)!=='false';
+    return `<div class="setting-row"><div><div class="setting-label">${f.l}</div><div class="setting-desc">${f.d}</div></div>
+    <label class="toggle-sw"><input type="checkbox" ${on?'checked':''} onchange="localStorage.setItem('sl:feat:${f.id}',this.checked);Toast.show('${f.l} '+(this.checked?'on':'off'),'info')"/><span class="tog-slider"></span></label></div>`;
+  }).join('');
+}
+function saveSiteCfg(){
+  localStorage.setItem('sl:admin:config',JSON.stringify({name:document.getElementById('cfg-name').value,email:document.getElementById('cfg-email').value,currency:document.getElementById('cfg-cur').value}));
+  Toast.show('Config saved','success');
+}
+function changePass(){
+  const c=document.getElementById('pw-cur').value, n=document.getElementById('pw-new').value, cf=document.getElementById('pw-conf').value;
+  if(c!==ADMIN.password){Toast.show('Current password wrong','error');return;}
+  if(n!==cf){Toast.show('Passwords do not match','error');return;}
+  if(n.length<8){Toast.show('Min 8 characters','error');return;}
+  localStorage.setItem('sl:admin:pw',n); Toast.show('Password updated','success');
+  ['pw-cur','pw-new','pw-conf'].forEach(id=>document.getElementById(id).value='');
+}
+function exportAllData(){
+  const d={};for(let k in localStorage)if(localStorage.hasOwnProperty(k)){try{d[k]=JSON.parse(localStorage[k]);}catch{d[k]=localStorage[k];}}
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(d,null,2)],{type:'application/json'}));a.download='savahlifestyle_backup.json';a.click();
+  Toast.show('Data exported','success');
+}
+function clearAppData(){
+  if(!confirm('Clear all app data? This cannot be undone.')) return;
+  const keep=['sl:admin:session','sl:admin:pw','sl:admin:config'];
+  const saved={};keep.forEach(k=>{if(localStorage.getItem(k))saved[k]=localStorage.getItem(k);});
+  localStorage.clear();
+  Object.entries(saved).forEach(([k,v])=>localStorage.setItem(k,v));
+  Toast.show('App data cleared','success');
+}
+function nukeEverything(){
+  if(!confirm('⚠️ This will clear ALL localStorage including admin session. You will be logged out. Continue?')) return;
+  localStorage.clear(); window.location.reload();
+}
+
+/* ════ ACTIVITY ════ */
+function renderActivity(){
+  const feed=[
+    {i:'🔐',t:'Admin signed in',ti:'Just now',c:'rgba(59,130,246,0.15)'},
+    {i:'📊',t:'Dashboard loaded',ti:'1m ago',c:'rgba(34,197,94,0.15)'},
+    {i:'💰',t:'Expense tracker accessed',ti:'5m ago',c:'rgba(245,158,11,0.15)'},
+    {i:'🎵',t:'Music player started',ti:'10m ago',c:'rgba(139,92,246,0.15)'},
+    {i:'🌤️',t:'Weather refreshed',ti:'15m ago',c:'rgba(6,182,212,0.15)'},
+    {i:'✅',t:'Todo list updated',ti:'20m ago',c:'rgba(34,197,94,0.15)'},
+  ];
+  document.getElementById('act-feed').innerHTML=feed.map(f=>`<div class="activity-item"><div class="activity-icon" style="background:${f.c}">${f.i}</div><div><div class="activity-text">${f.t}</div><div class="activity-time">${f.ti}</div></div></div>`).join('');
+  document.getElementById('act-summary').innerHTML=`
+    <div style="display:flex;flex-direction:column;gap:.6rem">
+      ${[['Total Sessions','—'],['Most Visited','Dashboard'],['Peak Time','9–10 AM'],['Avg Duration','—']].map(([l,v])=>`
+        <div style="display:flex;justify-content:space-between;padding:.6rem;background:var(--bg2);border-radius:var(--radius-sm)">
+          <span style="font-size:.82rem;color:var(--text-muted)">${l}</span>
+          <span style="font-size:.82rem;font-weight:600">${v}</span>
+        </div>`).join('')}
+    </div>`;
+}
+
+/* ════ NOTIFICATIONS ════ */
+function renderNotifs(){
+  const ns=JSON.parse(localStorage.getItem('sl:notifs')||'[]');
+  document.getElementById('notif-hist').innerHTML=ns.length?ns.slice(0,25).map(n=>`<div style="padding:.6rem;background:var(--bg2);border-radius:var(--radius-sm);margin-bottom:.4rem"><div style="font-size:.82rem">${n.text}</div><div style="font-size:.72rem;color:var(--text-muted);margin-top:.2rem">${new Date(n.ts).toLocaleString()} · <span style="color:var(--${n.type==='success'?'success':n.type==='warning'?'warning':n.type==='error'?'danger':'blue'})">${n.type||'info'}</span></div></div>`).join(''):'<div style="color:var(--text-muted);font-size:.85rem;text-align:center;padding:2rem">No notifications</div>';
+}
+function sendAdminNotif(){
+  const m=document.getElementById('notif-msg').value.trim(), t=document.getElementById('notif-type').value;
+  if(!m){Toast.show('Enter message','error');return;}
+  Notifs.add('[Admin] '+m,t); document.getElementById('notif-msg').value='';
+  renderNotifs(); Toast.show('Notification sent','success');
+}
+
+/* ════ SYSTEM ════ */
+function renderSystem(){
+  const bytes=getLSBytes(), keys=Object.keys(localStorage).length;
+  document.getElementById('sys-stats').innerHTML=[
+    {l:'localStorage Keys',v:keys,c:'var(--blue)'},
+    {l:'Storage Size',v:Math.round(bytes/1024)+' KB',c:'var(--success)'},
+    {l:'Users',v:getUsers().length,c:'var(--purple)'},
+    {l:'Page Load',v:Math.round(performance.now())+'ms',c:'var(--warning)'},
+  ].map(s=>`<div class="stat-box"><div class="stat-box-label">${s.l}</div><div class="stat-box-val" style="color:${s.c}">${s.v}</div></div>`).join('');
+  document.getElementById('sys-env').innerHTML=[
+    {l:'Platform',v:navigator.platform||'Unknown'},
+    {l:'Language',v:navigator.language},
+    {l:'Cookies',v:navigator.cookieEnabled?'Enabled':'Disabled'},
+    {l:'Online',v:navigator.onLine?'✅ Online':'❌ Offline'},
+    {l:'Screen',v:screen.width+'×'+screen.height},
+    {l:'Color Depth',v:screen.colorDepth+' bit'},
+    {l:'Timezone',v:Intl.DateTimeFormat().resolvedOptions().timeZone},
+    {l:'Theme',v:document.documentElement.getAttribute('data-theme')},
+  ].map(s=>`<div class="sys-item"><div class="sys-item-label">${s.l}</div><div class="sys-item-val">${s.v}</div></div>`).join('');
+  const quota=5*1024*1024, pct=Math.min(100,Math.round(bytes/quota*100));
+  document.getElementById('sys-storage').innerHTML=`
+    <div style="margin-bottom:.75rem">
+      <div style="display:flex;justify-content:space-between;margin-bottom:.4rem"><span style="font-size:.82rem">${Math.round(bytes/1024)} KB used</span><span style="font-size:.82rem;color:var(--text-muted)">~5 MB limit</span></div>
+      <div style="background:var(--bg3);border-radius:4px;height:10px;overflow:hidden"><div style="height:100%;width:${pct}%;background:${pct>80?'var(--danger)':pct>50?'var(--warning)':'var(--blue)'};border-radius:4px;transition:width .5s"></div></div>
+      <div style="font-size:.75rem;color:var(--text-muted);margin-top:.3rem">${pct}% used</div>
+    </div>
+    ${Object.keys(localStorage).slice(0,15).map(k=>{const sz=Math.round((k.length+(localStorage[k]||'').length)*2/100)/10;return`<div style="display:flex;justify-content:space-between;padding:.3rem 0;border-bottom:1px solid var(--border);font-size:.75rem"><span class="mono" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:70%">${k}</span><span style="color:var(--text-muted);flex-shrink:0">${sz} KB</span></div>`;}).join('')}`;
+  document.getElementById('ls-inspector').innerHTML=`
+    <table style="width:100%;border-collapse:collapse">
+      <thead><tr><th>Key</th><th>Size</th><th></th></tr></thead>
+      <tbody>${Object.keys(localStorage).map(k=>`<tr><td class="mono" style="font-size:.75rem;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${k}</td><td class="muted" style="white-space:nowrap">${Math.round((k.length+(localStorage[k]||'').length)*2/100)/10} KB</td><td><button class="btn btn-secondary btn-sm" onclick="viewLS('${k.replace(/'/g,"\\'")}')" style="font-size:.7rem;padding:.2rem .5rem">Inspect</button></td></tr>`).join('')}</tbody>
+    </table>`;
+}
+function viewLS(k){const v=localStorage.getItem(k)||'';let d=v;try{d=JSON.stringify(JSON.parse(v),null,2);}catch{}alert(k+':\n\n'+(d||'').substring(0,800)+(d.length>800?'\n…(truncated)':''));}
+function sendBroadcast(){const m=prompt('Broadcast message:');if(m){Notifs.add('[Broadcast] '+m,'info');Toast.show('Broadcast sent','success');}}
+
+/* ════ INIT ════ */
+function initAdmin(){
+  renderOverview();
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  if(checkAuth()){
+    document.getElementById('admin-login-screen').style.display='none';
+    initAdmin();
+  }
+});
+</script>
+</body>
+</html>

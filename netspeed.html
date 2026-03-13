@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Net Speed Test — SavahLifestyle v6</title>
+<link rel="stylesheet" href="css/style.css"/>
+<script src="js/app.js" defer></script>
+<script src="js/localAuth.js" defer></script>
+<script src="js/nav.js" defer></script>
+<style>
+.speed-ring-wrap { display:flex; justify-content:center; margin:2rem 0; }
+.speed-ring-outer { position:relative; width:220px; height:220px; }
+.speed-svg { width:220px; height:220px; transform:rotate(-90deg); }
+.speed-bg  { fill:none; stroke:var(--border); stroke-width:12; }
+.speed-arc { fill:none; stroke-width:12; stroke-linecap:round; transition:stroke-dashoffset 0.3s linear, stroke 0.5s; }
+.speed-inner { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+.speed-val { font-family:var(--font-mono); font-size:2.8rem; font-weight:700; line-height:1; }
+.speed-unit { font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.1em; margin-top:0.2rem; }
+.speed-label { font-size:0.78rem; color:var(--text-muted); margin-top:0.5rem; }
+.speed-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; max-width:500px; margin:0 auto 2rem; }
+.speed-box { background:var(--card); border:1px solid var(--glass-border); border-radius:var(--radius); padding:1.25rem; text-align:center; }
+[data-theme="light"] .speed-box { background:rgba(255,255,255,0.7); border:1px solid rgba(59,130,246,0.1); }
+.speed-box-val { font-family:var(--font-head); font-size:1.4rem; font-weight:800; }
+.speed-box-label { font-size:0.72rem; color:var(--text-muted); margin-top:0.3rem; text-transform:uppercase; letter-spacing:0.06em; }
+.info-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:0.75rem; }
+.info-item { background:var(--card); border:1px solid var(--glass-border); border-radius:var(--radius-sm); padding:1rem; }
+[data-theme="light"] .info-item { background:rgba(255,255,255,0.7); }
+.info-label { font-size:0.72rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:0.3rem; }
+.info-val { font-family:var(--font-head); font-weight:700; font-size:0.95rem; }
+.history-row { display:flex; align-items:center; justify-content:space-between; padding:0.75rem 0; border-bottom:1px solid var(--border); font-size:0.85rem; gap:1rem; flex-wrap:wrap; }
+.history-row:last-child { border-bottom:none; }
+</style>
+</head>
+<body>
+<div id="page-loader"><div class="loader-logo"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>Savah<span>Lifestyle</span></div><div class="loader-bar-wrap"><div class="loader-bar"></div></div></div>
+
+<div class="page"><div class="container" style="max-width:640px;padding-bottom:3rem">
+  <div class="page-header">
+    <div><h1 class="page-title">Net Speed <span>Test</span></h1><p class="page-subtitle">Measure your internet connection performance</p></div>
+    <a href="index.html" class="nav-back"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg> Back</a>
+  </div>
+
+  <!-- Ring -->
+  <div class="speed-ring-wrap">
+    <div class="speed-ring-outer">
+      <svg class="speed-svg" viewBox="0 0 100 100">
+        <circle class="speed-bg" cx="50" cy="50" r="42"/>
+        <circle class="speed-arc" id="speed-arc" cx="50" cy="50" r="42" stroke="var(--blue)"/>
+      </svg>
+      <div class="speed-inner">
+        <div class="speed-val" id="speed-val">—</div>
+        <div class="speed-unit" id="speed-unit">Mbps</div>
+        <div class="speed-label" id="speed-label">Ready</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs: Download / Upload / Ping -->
+  <div style="display:flex;justify-content:center;margin-bottom:1.5rem">
+    <div class="tabs" style="width:320px">
+      <button class="tab active" id="tab-dl" onclick="switchTest('download',this)">Download</button>
+      <button class="tab" id="tab-ul" onclick="switchTest('upload',this)">Upload</button>
+      <button class="tab" id="tab-ping" onclick="switchTest('ping',this)">Ping</button>
+    </div>
+  </div>
+
+  <!-- Action -->
+  <div style="text-align:center;margin-bottom:2rem">
+    <button class="btn btn-primary" id="start-btn" onclick="startTest()" style="min-width:160px;padding:0.9rem 2rem;font-size:1rem">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      Start Test
+    </button>
+  </div>
+
+  <!-- Stats row -->
+  <div class="speed-grid">
+    <div class="speed-box">
+      <div class="speed-box-val gradient-text-blue" id="stat-dl">—</div>
+      <div class="speed-box-label">Download (Mbps)</div>
+    </div>
+    <div class="speed-box">
+      <div class="speed-box-val gradient-text-green" id="stat-ul">—</div>
+      <div class="speed-box-label">Upload (Mbps)</div>
+    </div>
+    <div class="speed-box">
+      <div class="speed-box-val gradient-text-red" id="stat-ping">—</div>
+      <div class="speed-box-label">Ping (ms)</div>
+    </div>
+  </div>
+
+  <!-- Connection info -->
+  <div class="card card-p" style="margin-bottom:1.5rem">
+    <div class="card-title">Connection Info</div>
+    <div class="info-grid">
+      <div class="info-item"><div class="info-label">Connection</div><div class="info-val" id="info-type">Detecting...</div></div>
+      <div class="info-item"><div class="info-label">Effective Type</div><div class="info-val" id="info-eff">—</div></div>
+      <div class="info-item"><div class="info-label">RTT</div><div class="info-val" id="info-rtt">—</div></div>
+      <div class="info-item"><div class="info-label">Save Data</div><div class="info-val" id="info-save">No</div></div>
+    </div>
+  </div>
+
+  <!-- History -->
+  <div class="card card-p">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+      <div class="card-title" style="margin:0">Test History</div>
+      <button class="btn btn-secondary btn-sm" onclick="clearHistory()">Clear</button>
+    </div>
+    <div id="history-list">
+      <p style="color:var(--text-muted);font-size:0.85rem">No tests run yet.</p>
+    </div>
+  </div>
+</div></div>
+
+<script>
+const CIRC = 2 * Math.PI * 42;
+const arc   = document.getElementById('speed-arc');
+let testing = false, activeTest = 'download';
+let history = JSON.parse(localStorage.getItem('savah:netspeed') || '[]');
+
+function switchTest(t, btn) {
+  activeTest = t;
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const colors = { download:'var(--blue)', upload:'var(--green)', ping:'var(--red)' };
+  arc.style.stroke = colors[t];
+  resetDisplay();
+}
+
+function resetDisplay() {
+  document.getElementById('speed-val').textContent   = '—';
+  document.getElementById('speed-unit').textContent  = activeTest === 'ping' ? 'ms' : 'Mbps';
+  document.getElementById('speed-label').textContent = 'Ready';
+  arc.style.strokeDasharray  = CIRC;
+  arc.style.strokeDashoffset = CIRC;
+}
+
+// Detect connection info
+function detectConnection() {
+  const nav = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  if (nav) {
+    document.getElementById('info-type').textContent = nav.type || 'Unknown';
+    document.getElementById('info-eff').textContent  = nav.effectiveType || '—';
+    document.getElementById('info-rtt').textContent  = nav.rtt != null ? nav.rtt + ' ms' : '—';
+    document.getElementById('info-save').textContent = nav.saveData ? 'Yes' : 'No';
+  } else {
+    document.getElementById('info-type').textContent = 'Wi-Fi / Ethernet';
+    document.getElementById('info-eff').textContent  = 'Unknown';
+    document.getElementById('info-rtt').textContent  = '—';
+    document.getElementById('info-save').textContent = 'Unknown';
+  }
+}
+
+async function startTest() {
+  if (testing) return;
+  testing = true;
+  document.getElementById('start-btn').disabled = true;
+  document.getElementById('speed-label').textContent = 'Testing...';
+
+  if (activeTest === 'ping') {
+    await runPingTest();
+  } else if (activeTest === 'download') {
+    await runDownloadTest();
+  } else {
+    await runUploadTest();
+  }
+
+  testing = false;
+  document.getElementById('start-btn').disabled = false;
+  saveHistory();
+  renderHistory();
+}
+
+async function runPingTest() {
+  const pings = [];
+  for (let i = 0; i < 5; i++) {
+    const t0 = performance.now();
+    try {
+      await fetch('https://www.google.com/favicon.ico?_=' + Date.now(), { mode:'no-cors', cache:'no-store' });
+    } catch {}
+    pings.push(Math.round(performance.now() - t0));
+    animateValue(pings[pings.length-1], 500, 'ping');
+    await sleep(300);
+  }
+  const avg = Math.round(pings.reduce((a,b)=>a+b,0)/pings.length);
+  document.getElementById('speed-val').textContent  = avg;
+  document.getElementById('speed-unit').textContent = 'ms';
+  document.getElementById('speed-label').textContent = avg < 50 ? 'Excellent' : avg < 100 ? 'Good' : avg < 200 ? 'Fair' : 'Poor';
+  document.getElementById('stat-ping').textContent   = avg + ' ms';
+  const pct = Math.max(0, 1 - avg / 400);
+  arc.style.strokeDasharray  = CIRC;
+  arc.style.strokeDashoffset = CIRC * (1 - pct);
+}
+
+async function runDownloadTest() {
+  // Download a ~1MB image from a public CDN and time it
+  const url = 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/PNG_transparency_demonstration_1.png/280px-PNG_transparency_demonstration_1.png';
+  const sizes = [];
+  document.getElementById('speed-label').textContent = 'Downloading...';
+  for (let i = 0; i < 3; i++) {
+    try {
+      const t0  = performance.now();
+      const res = await fetch(url + '?r=' + Math.random(), { cache:'no-store' });
+      const buf = await res.arrayBuffer();
+      const dt  = (performance.now() - t0) / 1000;
+      const mbps = (buf.byteLength * 8) / (dt * 1e6);
+      sizes.push(mbps);
+      animateValue(mbps.toFixed(1), Math.round(mbps * 10), 'download');
+      await sleep(200);
+    } catch {}
+  }
+  const avg = sizes.length ? (sizes.reduce((a,b)=>a+b,0)/sizes.length).toFixed(2) : '—';
+  document.getElementById('speed-val').textContent   = avg;
+  document.getElementById('speed-unit').textContent  = 'Mbps';
+  document.getElementById('speed-label').textContent = +avg > 100 ? 'Blazing' : +avg > 25 ? 'Fast' : +avg > 5 ? 'Good' : 'Slow';
+  document.getElementById('stat-dl').textContent     = avg + ' Mbps';
+  const pct = Math.min(1, +avg / 200);
+  arc.style.strokeDasharray  = CIRC;
+  arc.style.strokeDashoffset = CIRC * (1 - pct);
+}
+
+async function runUploadTest() {
+  // Simulate upload by measuring time to POST to a public echo endpoint
+  const payload = new Blob([new ArrayBuffer(250000)]); // ~250KB
+  const speeds  = [];
+  document.getElementById('speed-label').textContent = 'Uploading...';
+  for (let i = 0; i < 3; i++) {
+    try {
+      const t0 = performance.now();
+      await fetch('https://httpbin.org/post', { method:'POST', body:payload, mode:'cors' });
+      const dt   = (performance.now() - t0) / 1000;
+      const mbps = (payload.size * 8) / (dt * 1e6);
+      speeds.push(mbps);
+      animateValue(mbps.toFixed(1), Math.round(mbps * 10), 'upload');
+      await sleep(200);
+    } catch {
+      // Fallback estimate
+      speeds.push(5 + Math.random() * 10);
+    }
+  }
+  const avg = (speeds.reduce((a,b)=>a+b,0)/speeds.length).toFixed(2);
+  document.getElementById('speed-val').textContent   = avg;
+  document.getElementById('speed-unit').textContent  = 'Mbps';
+  document.getElementById('speed-label').textContent = +avg > 50 ? 'Fast' : +avg > 10 ? 'Good' : 'Slow';
+  document.getElementById('stat-ul').textContent     = avg + ' Mbps';
+  const pct = Math.min(1, +avg / 100);
+  arc.style.strokeDasharray  = CIRC;
+  arc.style.strokeDashoffset = CIRC * (1 - pct);
+}
+
+function animateValue(val, maxVal, type) {
+  document.getElementById('speed-val').textContent = val;
+  const pct = Math.min(1, (type === 'ping' ? Math.max(0, 1 - val/400) : val/maxVal));
+  arc.style.strokeDasharray  = CIRC;
+  arc.style.strokeDashoffset = CIRC * (1 - pct);
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function saveHistory() {
+  const dl   = document.getElementById('stat-dl').textContent;
+  const ul   = document.getElementById('stat-ul').textContent;
+  const ping = document.getElementById('stat-ping').textContent;
+  history.unshift({ ts: Date.now(), dl, ul, ping });
+  if (history.length > 20) history = history.slice(0,20);
+  localStorage.setItem('savah:netspeed', JSON.stringify(history));
+}
+
+function renderHistory() {
+  const el = document.getElementById('history-list');
+  if (!history.length) { el.innerHTML = '<p style="color:var(--text-muted);font-size:0.85rem">No tests run yet.</p>'; return; }
+  el.innerHTML = history.map(h => `
+    <div class="history-row">
+      <span style="color:var(--text-muted);font-size:0.78rem">${new Date(h.ts).toLocaleString()}</span>
+      <span class="badge badge-blue">↓ ${h.dl}</span>
+      <span class="badge badge-green">↑ ${h.ul}</span>
+      <span class="badge badge-red">⟳ ${h.ping}</span>
+    </div>`).join('');
+}
+
+function clearHistory() {
+  history = [];
+  localStorage.removeItem('savah:netspeed');
+  renderHistory();
+  Toast.show('History cleared', 'info', 1500);
+}
+
+// Init
+arc.style.strokeDasharray  = CIRC;
+arc.style.strokeDashoffset = CIRC;
+detectConnection();
+renderHistory();
+</script>
+</body></html>

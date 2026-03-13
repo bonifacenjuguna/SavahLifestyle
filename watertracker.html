@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Water Tracker — SavahLifestyle</title>
+  <link rel="stylesheet" href="css/style.css"/>
+  <script src="js/app.js" defer></script>
+  <script src="js/localAuth.js" defer></script>
+<script src="js/nav.js" defer></script>
+  <style>
+    .water-visual{display:flex;flex-direction:column;align-items:center;gap:.75rem;margin:1.5rem 0;}
+    .water-glass{width:100px;height:140px;border:3px solid var(--blue);border-radius:0 0 20px 20px;position:relative;overflow:hidden;background:var(--bg3);}
+    .water-fill{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(180deg,rgba(59,130,246,0.5),rgba(59,130,246,0.8));transition:height 0.6s ease;border-radius:0 0 17px 17px;}
+    .wave-top{position:absolute;top:-8px;left:0;right:0;height:16px;background:rgba(59,130,246,0.6);border-radius:50%;}
+    .cup-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.3rem;padding:.85rem;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;transition:var(--transition);font-size:.78rem;color:var(--text-muted);font-weight:600;}
+    .cup-btn:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-dim);}
+    .log-entry{display:flex;align-items:center;gap:.6rem;padding:.6rem .9rem;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:.4rem;}
+  </style>
+</head>
+<body>
+<div id="page-loader"><div class="loader-logo"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>Savah<span>Lifestyle</span></div><div class="loader-bar-wrap"><div class="loader-bar"></div></div></div>
+<div class="page"><div class="container" style="padding-top:2rem;padding-bottom:3rem">
+  <div class="page-header">
+    <div><h1 class="page-title">Water <span>Tracker</span></h1><p class="page-subtitle">Stay hydrated — track your daily water intake</p></div>
+    <a href="index.html" class="nav-back"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>Back</a>
+  </div>
+  <div class="grid-4" style="margin-bottom:2rem" id="water-stats"></div>
+  <div class="grid-2" style="margin-bottom:2rem">
+    <div class="card card-p" style="text-align:center">
+      <div class="card-title" style="margin-bottom:.5rem;text-align:left"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg> Today's Progress</div>
+      <div class="water-visual">
+        <div style="font-family:var(--font-head);font-size:2.5rem;font-weight:800" id="water-display">0 ml</div>
+        <div style="color:var(--text-muted);font-size:.85rem" id="water-goal-label">Goal: 2000 ml</div>
+        <div class="water-glass" id="water-glass"><div class="water-fill" id="water-fill" style="height:0%"><div class="wave-top"></div></div></div>
+        <div style="font-family:var(--font-head);font-size:1.1rem;font-weight:700" id="water-pct">0%</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem;margin-bottom:1rem">
+        <div class="cup-btn" onclick="addWater(150)"><span style="font-size:1.3rem"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg></span>150 ml</div>
+        <div class="cup-btn" onclick="addWater(250)"><span style="font-size:1.3rem"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><path d="M8 2h8l2 4v14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V6l2-4z"/></svg></span>250 ml</div>
+        <div class="cup-btn" onclick="addWater(350)"><span style="font-size:1.3rem"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><path d="M8 2h8l2 4v14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V6l2-4z"/></svg></span>350 ml</div>
+        <div class="cup-btn" onclick="addWater(500)"><span style="font-size:1.3rem"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><path d="M8 2h8l2 4v14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V6l2-4z"/></svg></span>500 ml</div>
+      </div>
+      <div style="display:flex;gap:.5rem;align-items:center">
+        <input type="number" class="form-input" id="custom-ml" placeholder="Custom ml" min="1" style="flex:1"/>
+        <button class="btn btn-primary" onclick="addCustom()">Add</button>
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="resetToday()" style="width:100%;margin-top:.65rem;color:var(--danger)">Reset Today</button>
+    </div>
+    <div class="card card-p">
+      <div class="card-title" style="margin-bottom:.5rem"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>️ Settings & Tips</div>
+      <div class="form-group">
+        <label class="form-label">Daily Goal (ml)</label>
+        <input type="number" class="form-input" id="goal-input" value="2000" min="500" max="6000"/>
+        <button class="btn btn-primary btn-sm" onclick="setGoal()" style="margin-top:.4rem">Update Goal</button>
+      </div>
+      <div style="background:var(--bg2);border-radius:var(--radius-sm);padding:1rem;margin-top:1rem">
+        <div style="font-size:.82rem;font-weight:700;margin-bottom:.65rem;color:var(--blue)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><line x1="12" y1="2" x2="12" y2="6"/><circle cx="12" cy="12" r="4"/></svg> Hydration Tips</div>
+        <div style="display:flex;flex-direction:column;gap:.5rem">
+          ${['Drink a glass of water first thing in the morning','Carry a reusable water bottle everywhere','Eat water-rich foods like cucumber & watermelon','Set hourly reminders to drink','Drink before, during and after exercise'].map(t=>`<div style="font-size:.78rem;color:var(--text-muted);padding:.35rem 0;border-bottom:1px solid var(--border)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg> ${t}</div>`).join('')}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card card-p">
+    <div class="card-title" style="margin-bottom:1rem">Today's Log</div>
+    <div id="water-log"></div>
+  </div>
+</div></div>
+<script>
+const TODAY = new Date().toISOString().split('T')[0];
+let allData = JSON.parse(localStorage.getItem('savah:water')||'{}');
+if(!allData[TODAY]) allData[TODAY]=[];
+let goal = parseInt(localStorage.getItem('savah:waterGoal')||'2000');
+document.getElementById('goal-input').value = goal;
+
+function todayTotal(){return allData[TODAY].reduce((s,e)=>s+e.ml,0);}
+function save(){localStorage.setItem('savah:water',JSON.stringify(allData));}
+function addWater(ml){allData[TODAY].unshift({id:Date.now(),ts:new Date().toISOString(),ml});save();render();Toast.show('+'+ml+' ml logged','success');}
+function addCustom(){const v=parseInt(document.getElementById('custom-ml').value);if(!v||v<1){Toast.show('Enter valid amount','warning');return;}addWater(v);document.getElementById('custom-ml').value='';}
+function resetToday(){if(!confirm('Reset today?'))return;allData[TODAY]=[];save();render();}
+function setGoal(){const v=parseInt(document.getElementById('goal-input').value);if(!v||v<100)return;goal=v;localStorage.setItem('savah:waterGoal',goal);render();Toast.show('Goal updated to '+v+' ml','success');}
+
+function render(){
+  const total=todayTotal(), pct=Math.min(100,Math.round(total/goal*100));
+  document.getElementById('water-display').textContent=total+' ml';
+  document.getElementById('water-goal-label').textContent='Goal: '+goal+' ml';
+  document.getElementById('water-fill').style.height=pct+'%';
+  document.getElementById('water-pct').textContent=pct+'% complete';
+  document.getElementById('water-pct').style.color=pct>=100?'var(--success)':pct>=75?'var(--blue)':pct>=50?'var(--warning)':'var(--text-muted)';
+  const days=Object.keys(allData).sort().slice(-7);
+  const streak=calcStreak();
+  const avgWeek=days.length?Math.round(days.reduce((s,d)=>s+(allData[d]||[]).reduce((ss,e)=>ss+e.ml,0),0)/days.length):0;
+  document.getElementById('water-stats').innerHTML=[
+    {l:'Today',v:total+' ml',c:'var(--blue)'},{l:'Goal',v:pct+'%',c:pct>=100?'var(--success)':'var(--warning)'},
+    {l:'7-Day Avg',v:avgWeek+' ml',c:'var(--purple)'},{l:'Streak',v:streak+' days',c:'var(--success)'},
+  ].map(s=>`<div class="stat-card"><div><div class="stat-value" style="color:${s.c};font-size:1.4rem">${s.v}</div><div class="stat-label">${s.l}</div></div></div>`).join('');
+  const log=allData[TODAY];
+  document.getElementById('water-log').innerHTML=log.length?log.map(e=>`
+    <div class="log-entry">
+      <span style="font-size:1.2rem"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg></span>
+      <div style="flex:1"><div style="font-size:.88rem;font-weight:600">${e.ml} ml</div><div class="muted">${new Date(e.ts).toLocaleTimeString()}</div></div>
+      <button class="btn-icon btn" onclick="allData[TODAY]=allData[TODAY].filter(x=>x.id!==${e.id});save();render()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg></button>
+    </div>`).join(''):`<div class="empty-state" style="padding:2rem"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg><h3>No water logged today</h3><p>Tap a cup to log your intake.</p></div>`;
+}
+function calcStreak(){
+  let s=0,d=new Date();
+  while(true){const k=d.toISOString().split('T')[0];if((allData[k]||[]).reduce((t,e)=>t+e.ml,0)>=goal)s++;else if(k!==TODAY)break;d.setDate(d.getDate()-1);if(s>365)break;}return s;
+}
+render();
+document.addEventListener('DOMContentLoaded',()=>{buildNav();buildFooter();});
+</script>
+</body>
+</html>

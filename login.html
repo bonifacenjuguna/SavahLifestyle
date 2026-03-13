@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Login — SavahLifestyle</title>
+<script>(function(){document.documentElement.setAttribute('data-theme',localStorage.getItem('sl:theme')||'dark')})();</script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:'DM Sans',sans-serif;overflow:hidden}
+
+/* ─── tokens ─── */
+:root{
+  --blue:#3b82f6;--bd:rgba(59,130,246,.13);--bg:rgba(59,130,246,.28);
+  --purple:#8b5cf6;--pd:rgba(139,92,246,.12);
+  --green:#10b981;--gd:rgba(16,185,129,.12);
+  --red:#ef4444;--rd:rgba(239,68,68,.1);
+  --cyan:#06b6d4;--orange:#f97316;
+  --bg1:#060810;--bg2:#0a0d15;--bg3:#0f1220;
+  --card:rgba(255,255,255,.05);--bdr:rgba(255,255,255,.08);
+  --txt:#f1f5f9;--mut:#64748b;--dim:#2d3748;
+  --r:10px;
+}
+[data-theme=light]{
+  --bg1:#f8faff;--bg2:#fff;--bg3:#f0f4ff;
+  --card:rgba(255,255,255,.8);--bdr:rgba(59,130,246,.12);
+  --txt:#0f172a;--mut:#475569;--dim:#94a3b8;
+  --bd:rgba(59,130,246,.08);--pd:rgba(139,92,246,.08);
+}
+
+/* ═══════════════════════════════════════════════════════
+   ROOT: fixed, full-screen, 3 columns side by side
+   COL-1 (info) | COL-2 (overlay) | COL-3 (form)
+   
+   LOGIN  mode: order  1 | 2 | 3   → info LEFT,  overlay MIDDLE, form RIGHT
+   SIGNUP mode: order  3 | 2 | 1   → form LEFT,  overlay MIDDLE, info RIGHT
+   Overlay stays in the centre; info and form swap sides.
+═══════════════════════════════════════════════════════ */
+#root{
+  position:fixed;inset:0;
+  display:flex;
+  background:var(--bg1);
+  color:var(--txt);
+  overflow:hidden;
+}
+
+/* ─── INFO panel (38%) ─── */
+#info{
+  width:38%;
+  flex-shrink:0;
+  order:1;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  padding:2.5rem 3rem;
+  overflow-y:auto;
+  position:relative;
+}
+#info::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse at 20% 25%,rgba(59,130,246,.12) 0%,transparent 55%),
+    radial-gradient(ellipse at 80% 75%,rgba(139,92,246,.09) 0%,transparent 50%);
+}
+[data-theme=light] #info::before{
+  background:radial-gradient(ellipse at 20% 25%,rgba(59,130,246,.07) 0%,transparent 55%);
+}
+/* signup: info goes right */
+#root.su #info{order:2}
+
+/* ─── FORM panel (62%) ─── */
+#frm{
+  flex:1;
+  order:2;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  padding:2rem 4rem;
+  overflow-y:auto;
+  background:var(--bg2);
+  border-left:1px solid var(--bdr);
+}
+[data-theme=light] #frm{box-shadow:-4px 0 24px rgba(59,130,246,.06)}
+/* signup: form goes left */
+#root.su #frm{order:1;border-left:none;border-right:1px solid var(--bdr)}
+[data-theme=light] #root.su #frm{box-shadow:4px 0 24px rgba(59,130,246,.06)}
+
+/* ═══ INFO CONTENT ═══ */
+#info-inner{position:relative;z-index:1;max-width:420px}
+.brand{display:flex;align-items:center;gap:.65rem;text-decoration:none;color:var(--txt);font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:800;margin-bottom:1.75rem}
+.brand-ico{width:36px;height:36px;border-radius:10px;flex-shrink:0;background:linear-gradient(135deg,var(--blue),var(--purple));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px var(--bg)}
+.brand span{color:var(--blue)}
+.headline{font-family:'Syne',sans-serif;font-size:clamp(1.5rem,2vw,2rem);font-weight:800;line-height:1.12;margin-bottom:.75rem;letter-spacing:-.02em}
+.hl{background:linear-gradient(135deg,var(--blue),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.lead{color:var(--mut);font-size:.85rem;line-height:1.65;margin-bottom:1.4rem}
+.feats{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:1.4rem}
+.feat{display:flex;align-items:flex-start;gap:.5rem;padding:.6rem .65rem;border-radius:var(--r);background:var(--card);border:1px solid var(--bdr);transition:border-color .2s}
+.feat:hover{border-color:rgba(59,130,246,.3)}
+[data-theme=light] .feat{background:rgba(255,255,255,.75)}
+.feat-ico{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.feat-t{font-weight:700;font-size:.74rem;margin-bottom:.08rem}
+.feat-d{font-size:.66rem;color:var(--mut);line-height:1.3}
+.stats{display:flex;gap:1.25rem;padding-top:1rem;border-top:1px solid var(--bdr);margin-bottom:1rem}
+.sv{font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800;color:var(--blue)}
+.sl{font-size:.66rem;color:var(--mut);margin-top:.1rem}
+.testi{padding:.75rem .9rem;border-radius:var(--r);background:var(--card);border:1px solid var(--bdr);border-left:3px solid var(--blue);font-size:.77rem;color:var(--mut);line-height:1.55;font-style:italic}
+.testi-a{display:flex;align-items:center;gap:.5rem;margin-top:.5rem;font-style:normal}
+.tav{width:22px;height:22px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,var(--blue),var(--purple));display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:.58rem;font-weight:800;color:#fff}
+.tnm{font-size:.72rem;font-weight:700;color:var(--txt)}
+.trl{font-size:.64rem;color:var(--mut)}
+
+/* ═══ FORM CONTENT ═══ */
+#frm-inner{width:100%;max-width:340px;margin:0 auto}
+.pills{display:flex;background:var(--bg3);border-radius:50px;padding:3px;margin-bottom:1.4rem}
+.pill{flex:1;padding:.48rem .75rem;border:none;background:transparent;color:var(--mut);font-family:'Syne',sans-serif;font-size:.81rem;font-weight:700;cursor:pointer;border-radius:50px;transition:all .2s;white-space:nowrap}
+.pill.on{background:linear-gradient(135deg,var(--blue),var(--purple));color:#fff;box-shadow:0 2px 10px var(--bg)}
+.panel{display:none}
+.panel.on{display:block;animation:pIn .22s ease both}
+@keyframes pIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.fhead{font-family:'Syne',sans-serif;font-size:1.25rem;font-weight:800;margin-bottom:.2rem}
+.fsub{color:var(--mut);font-size:.79rem;margin-bottom:1rem;line-height:1.5}
+.fg{margin-bottom:.75rem}
+.fl{display:block;font-size:.69rem;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.32rem}
+.iw{position:relative}
+.ii{position:absolute;left:.8rem;top:50%;transform:translateY(-50%);color:var(--mut);pointer-events:none;display:flex;align-items:center}
+.fi{width:100%;padding:.63rem .8rem .63rem 2.5rem;background:var(--card);border:1.5px solid var(--bdr);border-radius:var(--r);color:var(--txt);font-family:'DM Sans',sans-serif;font-size:.87rem;outline:none;transition:border-color .2s,box-shadow .2s}
+.fi:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--bd)}
+.fi::placeholder{color:var(--dim)}
+[data-theme=light] .fi{background:#f8faff}
+[data-theme=light] .fi::placeholder{color:#aab}
+.ie{position:absolute;right:.8rem;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--mut);cursor:pointer;display:flex;padding:0}
+.ie:hover{color:var(--blue)}
+.srow{display:flex;gap:3px;margin-top:.38rem}
+.sseg{flex:1;height:3px;border-radius:2px;background:var(--bdr);transition:background .3s}
+.slbl{font-size:.66rem;color:var(--mut);margin-top:.22rem}
+.forgot{text-align:right;margin-bottom:.6rem}
+.forgot a{font-size:.73rem;color:var(--blue);text-decoration:none}
+.forgot a:hover{text-decoration:underline}
+.bsub{width:100%;padding:.75rem;background:linear-gradient(135deg,var(--blue),var(--purple));color:#fff;border:none;border-radius:var(--r);font-family:'Syne',sans-serif;font-size:.93rem;font-weight:700;cursor:pointer;transition:box-shadow .2s,transform .2s;display:flex;align-items:center;justify-content:center;gap:.5rem}
+.bsub:hover{box-shadow:0 5px 20px var(--bg);transform:translateY(-1px)}
+.bsub:disabled{opacity:.6;cursor:not-allowed;transform:none;box-shadow:none}
+.or{display:flex;align-items:center;gap:.7rem;margin:.8rem 0;color:var(--mut);font-size:.73rem}
+.or::before,.or::after{content:'';flex:1;height:1px;background:var(--bdr)}
+.socs{display:flex;gap:.55rem}
+.bsoc{flex:1;display:flex;align-items:center;justify-content:center;gap:.45rem;padding:.56rem;background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:600;color:var(--txt);transition:border-color .2s,transform .2s;text-decoration:none}
+.bsoc:hover{border-color:var(--blue);transform:translateY(-1px)}
+.swl{text-align:center;margin-top:.8rem;font-size:.78rem;color:var(--mut)}
+.swl a{color:var(--blue);text-decoration:none;cursor:pointer;font-weight:600}
+.swl a:hover{text-decoration:underline}
+.agree{display:flex;align-items:flex-start;gap:.5rem;font-size:.74rem;color:var(--mut);cursor:pointer;margin-bottom:.6rem}
+.agree input{margin-top:2px;accent-color:var(--blue);flex-shrink:0}
+.agree a{color:var(--blue);text-decoration:none}
+.perks{margin-top:.9rem;padding-top:.85rem;border-top:1px solid var(--bdr)}
+.perks-t{font-size:.66rem;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.5rem;text-align:center}
+.perks-g{display:grid;grid-template-columns:1fr 1fr;gap:.38rem}
+.perk{display:flex;align-items:center;gap:.38rem;padding:.38rem .55rem;background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);font-size:.69rem;font-weight:600;color:var(--mut)}
+
+/* toasts */
+#toasts{position:fixed;bottom:1.5rem;right:1.5rem;z-index:9999;display:flex;flex-direction:column;gap:.5rem;align-items:flex-end;pointer-events:none}
+.toast{display:flex;align-items:center;gap:.55rem;padding:.65rem .95rem;border-radius:var(--r);background:var(--bg2);border:1px solid var(--bdr);border-left-width:3px;box-shadow:0 8px 28px rgba(0,0,0,.4);font-size:.83rem;color:var(--txt);opacity:0;transform:translateX(14px);transition:opacity .28s,transform .28s;pointer-events:auto}
+[data-theme=light] .toast{background:#fff;box-shadow:0 4px 16px rgba(59,130,246,.1)}
+.toast.show{opacity:1;transform:none}
+
+/* mobile */
+@media(max-width:860px){
+  html,body{overflow:auto;height:auto}
+  #root{position:relative;flex-direction:column;height:auto;min-height:100vh;overflow:auto}
+  #info,#frm{width:100%;flex:none;order:unset!important}
+  #info{order:2!important;padding:1.75rem 1.5rem}
+  #frm{order:1!important;border:none!important;box-shadow:none!important;padding:1.5rem 1.25rem}
+  .feats{grid-template-columns:1fr}
+}
+@media(max-width:480px){#info{display:none}}
+</style>
+</head>
+<body>
+<div id="toasts"></div>
+
+<div id="root">
+
+  <!-- ══ COL 1: INFO ══ -->
+  <div id="info">
+    <div id="info-inner">
+
+      <a href="index.html" class="brand">
+        <div class="brand-ico"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg></div>
+        Savah<span>Lifestyle</span>
+      </a>
+
+      <h2 class="headline" id="ihl">Everything you need,<br><span class="hl">in one place</span></h2>
+      <p class="lead" id="ilead">Track habits, manage finances, stay focused and live better. Your complete digital productivity hub — works offline, always free.</p>
+
+      <div class="feats">
+        <div class="feat"><div class="feat-ico" style="background:var(--bd)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg></div><div><div class="feat-t">Weather</div><div class="feat-d">Live forecasts</div></div></div>
+        <div class="feat"><div class="feat-ico" style="background:var(--gd)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></div><div><div class="feat-t">Habits</div><div class="feat-d">Build streaks daily</div></div></div>
+        <div class="feat"><div class="feat-ico" style="background:var(--pd)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div><div class="feat-t">Focus</div><div class="feat-d">Pomodoro + deep work</div></div></div>
+        <div class="feat"><div class="feat-ico" style="background:var(--rd)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div><div class="feat-t">Finance</div><div class="feat-d">Smart expense tracking</div></div></div>
+        <div class="feat"><div class="feat-ico" style="background:rgba(6,182,212,.1)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div><div><div class="feat-t">Journal</div><div class="feat-d">Reflect and grow</div></div></div>
+        <div class="feat"><div class="feat-ico" style="background:rgba(249,115,22,.1)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div><div><div class="feat-t">Goals</div><div class="feat-d">Track your targets</div></div></div>
+      </div>
+
+      <div class="stats">
+        <div><div class="sv">40+</div><div class="sl">Modules</div></div>
+        <div><div class="sv" style="color:var(--green)">Free</div><div class="sl">Always free</div></div>
+        <div><div class="sv" style="color:var(--purple)">Offline</div><div class="sl">No internet needed</div></div>
+      </div>
+
+      <div class="testi">
+        "SavahLifestyle changed how I organise my day. The habit tracker keeps me accountable every single morning."
+        <div class="testi-a">
+          <div class="tav">AM</div>
+          <div><div class="tnm">Amina M.</div><div class="trl">Verified user</div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══ FORM ══ -->
+  <div id="frm">
+    <div id="frm-inner">
+
+      <div class="pills">
+        <button class="pill on" id="pl" onclick="go('login')">Login</button>
+        <button class="pill" id="ps" onclick="go('signup')">Sign Up</button>
+      </div>
+
+      <!-- LOGIN -->
+      <div class="panel on" id="panL">
+        <div class="fhead">Welcome back</div>
+        <div class="fsub">Sign in to sync your data across all devices.</div>
+
+        <div class="fg">
+          <label class="fl">Email</label>
+          <div class="iw">
+            <span class="ii"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span>
+            <input class="fi" type="email" id="lem" placeholder="you@email.com" autocomplete="email"/>
+          </div>
+        </div>
+
+        <div class="fg">
+          <label class="fl">Password</label>
+          <div class="iw">
+            <span class="ii"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+            <input class="fi" type="password" id="lpw" placeholder="Your password" autocomplete="current-password"/>
+            <button class="ie" onclick="eye('lpw',this)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+          </div>
+        </div>
+
+        <div class="forgot"><a href="#">Forgot password?</a></div>
+
+        <button class="bsub" id="btnl" onclick="doLogin()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+          Login
+        </button>
+
+        <div class="or">or continue with</div>
+        <div class="socs">
+          <button class="bsoc" onclick="soon()"><svg width="14" height="14" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>Google</button>
+          <button class="bsoc" onclick="soon()"><svg width="14" height="14" viewBox="0 0 24 24" fill="#1877F2"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>Facebook</button>
+        </div>
+
+        <div class="swl">No account? <a onclick="go('signup')">Create one free</a></div>
+
+        <div class="perks">
+          <div class="perks-t">What's included</div>
+          <div class="perks-g">
+            <div class="perk"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>No ads</div>
+            <div class="perk"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Private</div>
+            <div class="perk"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="2" x2="22" y2="22"/></svg>Offline</div>
+            <div class="perk"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>Free always</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SIGNUP -->
+      <div class="panel" id="panS">
+        <div class="fhead">Create account</div>
+        <div class="fsub">Join thousands building better habits. Free forever.</div>
+
+        <div class="fg">
+          <label class="fl">Full Name</label>
+          <div class="iw">
+            <span class="ii"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+            <input class="fi" type="text" id="snm" placeholder="Jane Doe" autocomplete="name"/>
+          </div>
+        </div>
+
+        <div class="fg">
+          <label class="fl">Email</label>
+          <div class="iw">
+            <span class="ii"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span>
+            <input class="fi" type="email" id="sem" placeholder="you@email.com" autocomplete="email"/>
+          </div>
+        </div>
+
+        <div class="fg">
+          <label class="fl">Password</label>
+          <div class="iw">
+            <span class="ii"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+            <input class="fi" type="password" id="spw" placeholder="Min. 8 characters" autocomplete="new-password" oninput="strength(this.value)"/>
+            <button class="ie" onclick="eye('spw',this)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+          </div>
+          <div class="srow"><div class="sseg" id="s1"></div><div class="sseg" id="s2"></div><div class="sseg" id="s3"></div><div class="sseg" id="s4"></div></div>
+          <div class="slbl" id="slbl">Enter a password</div>
+        </div>
+
+        <label class="agree"><input type="checkbox" id="sok"/>I agree to the <a href="terms.html">Terms</a> and <a href="privacy.html">Privacy Policy</a></label>
+
+        <button class="bsub" id="btns" onclick="doSignUp()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+          Create Account
+        </button>
+
+        <div class="or">or continue with</div>
+        <div class="socs">
+          <button class="bsoc" onclick="soon()"><svg width="14" height="14" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>Google</button>
+          <button class="bsoc" onclick="soon()"><svg width="14" height="14" viewBox="0 0 24 24" fill="#1877F2"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>Facebook</button>
+        </div>
+
+        <div class="swl">Already have an account? <a onclick="go('login')">Login instead</a></div>
+      </div>
+
+    </div>
+  </div>
+
+</div><!-- #root -->
+
+<script>
+/* redirect if logged in */
+try{if(localStorage.getItem('sl:token')&&localStorage.getItem('sl:user'))window.location.href='index.html';}catch(e){}
+
+/* toast */
+function toast(msg,type){
+  const c=document.getElementById('toasts'),t=document.createElement('div');
+  t.className='toast';
+  t.style.borderLeftColor={success:'#10b981',error:'#ef4444',info:'#3b82f6',warning:'#f97316'}[type]||'#3b82f6';
+  t.textContent=msg;c.appendChild(t);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>t.classList.add('show')));
+  setTimeout(()=>{t.classList.remove('show');setTimeout(()=>t.remove(),300);},3200);
+}
+
+/* switch mode — info and form swap, overlay stays in middle */
+function go(m){
+  const root=document.getElementById('root');
+  document.getElementById('pl').classList.toggle('on',m==='login');
+  document.getElementById('ps').classList.toggle('on',m==='signup');
+  document.getElementById('panL').classList.toggle('on',m==='login');
+  document.getElementById('panS').classList.toggle('on',m==='signup');
+
+  /* info: order 1 (login=left) or 3 (signup=right)
+     overlay: always order 2 (middle)
+     form:  order 3 (login=right) or 1 (signup=left) */
+  const info=document.getElementById('info');
+  const frm=document.getElementById('frm');
+  if(m==='signup'){
+    info.style.order='2';frm.style.order='1';
+    frm.style.borderLeft='none';frm.style.borderRight='1px solid var(--bdr)';
+    document.getElementById('ihl').innerHTML='Join SavahLifestyle,<br><span class="hl">start for free</span>';
+    document.getElementById('ilead').textContent='Create your account in under 30 seconds. No credit card required. Works offline from day one.';
+  } else {
+    info.style.order='1';frm.style.order='2';
+    frm.style.borderLeft='1px solid var(--bdr)';frm.style.borderRight='none';
+    document.getElementById('ihl').innerHTML='Everything you need,<br><span class="hl">in one place</span>';
+    document.getElementById('ilead').textContent='Track habits, manage finances, stay focused and live better. Your complete digital productivity hub — works offline, always free.';
+  }
+}
+
+function eye(id,b){const i=document.getElementById(id);i.type=i.type==='text'?'password':'text';b.style.color=i.type==='text'?'var(--blue)':'';}
+function strength(v){
+  const s=[1,2,3,4].map(n=>document.getElementById('s'+n));
+  const l=document.getElementById('slbl');let sc=0;
+  if(v.length>=8)sc++;if(/[A-Z]/.test(v))sc++;if(/[0-9]/.test(v))sc++;if(/[^A-Za-z0-9]/.test(v))sc++;
+  const c=['#ef4444','#f97316','#f59e0b','#22c55e'],lb=['Weak','Fair','Good','Strong'];
+  s.forEach((el,i)=>{el.style.background=i<sc?c[sc-1]:'var(--bdr)';});
+  l.textContent=sc?lb[sc-1]:'Enter a password';l.style.color=sc?c[sc-1]:'';
+}
+function soon(){toast('Coming soon','info');}
+
+/* DB */
+const DB={
+  all(){try{return JSON.parse(localStorage.getItem('sl:db:users')||'[]');}catch{return[];}},
+  save(u){localStorage.setItem('sl:db:users',JSON.stringify(u));},
+  find(fn){return this.all().find(fn)||null;},
+  add(u){const a=this.all();a.push(u);this.save(a);},
+  upd(id,p){this.save(this.all().map(u=>u.id===id?{...u,...p}:u));},
+  uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);},
+  async hash(pw,salt){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(salt+pw+'sv12'));return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('');},
+  async verify(pw,h,s){return(await this.hash(pw,s))===h;},
+  tok(u){return'sv.'+btoa(u.id+':'+u.email+':'+Date.now());}
+};
+(async()=>{
+  const ae='njugunaboniface211@gmail.com';
+  if(!DB.find(u=>u.email===ae)){
+    const s='adm_sa';const h=await DB.hash('Bonniyohhh_2301',s);
+    DB.add({id:'admin_7399',name:'Boniface Njuguna',email:ae,username:'njugunaboniface211',password_hash:h,password_salt:s,isAdmin:true,provider:'local',bio:'',avatar:'',createdAt:'2026-03-12T22:28:26Z',lastSeen:new Date().toISOString()});
+  }
+})();
+
+async function doLogin(){
+  const em=document.getElementById('lem').value.trim(),pw=document.getElementById('lpw').value;
+  if(!em||!pw){toast('Enter your email and password','warning');return;}
+  const b=document.getElementById('btnl');b.disabled=true;b.textContent='Logging in...';
+  const u=DB.find(x=>x.email.toLowerCase()===em.toLowerCase());
+  if(!u){b.disabled=false;b.textContent='Login';toast('No account found with that email','error');return;}
+  const ok=await DB.verify(pw,u.password_hash,u.password_salt);
+  if(!ok){b.disabled=false;b.textContent='Login';toast('Incorrect password','error');return;}
+  DB.upd(u.id,{lastSeen:new Date().toISOString()});
+  const{password_hash,password_salt,...safe}=u;
+  localStorage.setItem('sl:user',JSON.stringify(safe));localStorage.setItem('sl:token',DB.tok(safe));
+  toast('Welcome back, '+safe.name+'!','success');
+  setTimeout(()=>window.location.href='index.html',700);
+}
+
+async function doSignUp(){
+  const nm=document.getElementById('snm').value.trim(),em=document.getElementById('sem').value.trim(),pw=document.getElementById('spw').value,ok=document.getElementById('sok').checked;
+  if(!nm||!em||!pw){toast('Please fill in all fields','warning');return;}
+  if(!ok){toast('Please accept the Terms and Privacy Policy','warning');return;}
+  if(pw.length<8){toast('Password must be at least 8 characters','warning');return;}
+  if(DB.find(u=>u.email.toLowerCase()===em.toLowerCase())){toast('An account with this email already exists','error');return;}
+  const b=document.getElementById('btns');b.disabled=true;b.textContent='Creating account...';
+  const id=DB.uid(),s='s_'+id,h=await DB.hash(pw,s);
+  const nu={id,name:nm,email:em.toLowerCase(),username:em.split('@')[0].replace(/[^a-z0-9]/gi,'').toLowerCase(),password_hash:h,password_salt:s,isAdmin:false,provider:'local',bio:'',avatar:'',createdAt:new Date().toISOString(),lastSeen:new Date().toISOString()};
+  DB.add(nu);
+  const{password_hash,password_salt,...safe}=nu;
+  localStorage.setItem('sl:user',JSON.stringify(safe));localStorage.setItem('sl:token',DB.tok(safe));
+  toast('Welcome to SavahLifestyle, '+nm+'!','success');
+  setTimeout(()=>window.location.href='index.html',800);
+}
+</script>
+</body>
+</html>

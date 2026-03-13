@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>My Profile — SavahLifestyle v6</title>
+<link rel="stylesheet" href="css/style.css"/>
+<script src="js/app.js" defer></script>
+<script src="js/localAuth.js" defer></script>
+<script src="js/nav.js" defer></script>
+<style>
+.profile-hero { background:linear-gradient(135deg,var(--blue-dim),var(--purple-dim)); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:2rem; margin-bottom:2rem; display:flex; align-items:center; gap:2rem; flex-wrap:wrap; }
+[data-theme="light"] .profile-hero { background:linear-gradient(135deg,rgba(59,130,246,0.06),rgba(139,92,246,0.05)); }
+.profile-avatar-wrap { position:relative; flex-shrink:0; cursor:pointer; }
+.profile-avatar { width:90px; height:90px; border-radius:50%; background:linear-gradient(135deg,var(--blue),var(--purple)); display:flex; align-items:center; justify-content:center; font-family:var(--font-head); font-size:2rem; font-weight:700; color:#fff; border:3px solid rgba(59,130,246,0.4); overflow:hidden; transition:var(--transition); }
+.profile-avatar img { width:100%; height:100%; object-fit:cover; }
+.profile-edit-overlay { position:absolute; inset:0; border-radius:50%; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; opacity:0; transition:var(--transition); }
+.profile-avatar-wrap:hover .profile-edit-overlay { opacity:1; }
+.profile-info { flex:1; }
+.profile-name { font-family:var(--font-head); font-size:1.5rem; font-weight:800; }
+.profile-username { color:var(--blue); font-size:0.9rem; margin-top:0.15rem; }
+.profile-bio { color:var(--text-muted); font-size:0.88rem; margin-top:0.5rem; max-width:400px; }
+.profile-meta { display:flex; gap:1rem; margin-top:0.75rem; flex-wrap:wrap; }
+.profile-meta-item { font-size:0.78rem; color:var(--text-muted); display:flex; align-items:center; gap:0.3rem; }
+.profile-tabs { display:flex; gap:0.5rem; border-bottom:1px solid var(--border); margin-bottom:1.5rem; overflow-x:auto; }
+.ptab { padding:0.65rem 1.1rem; border:none; background:none; color:var(--text-muted); font-family:var(--font-head); font-size:0.85rem; font-weight:600; cursor:pointer; border-bottom:2px solid transparent; transition:var(--transition); white-space:nowrap; }
+.ptab.active { color:var(--blue); border-bottom-color:var(--blue); }
+.ptab-panel { display:none; }
+.ptab-panel.active { display:block; animation:slideIn 0.25s ease both; }
+@keyframes slideIn { from{opacity:0;transform:translateY(8px);} to{opacity:1;transform:none;} }
+.setting-row { display:flex; align-items:center; justify-content:space-between; padding:1rem 0; border-bottom:1px solid var(--border); gap:1rem; flex-wrap:wrap; }
+.setting-row:last-child { border-bottom:none; }
+.setting-label { font-weight:600; font-size:0.9rem; }
+.setting-desc { font-size:0.8rem; color:var(--text-muted); margin-top:0.2rem; }
+.stat-mini { text-align:center; }
+.stat-mini-val { font-family:var(--font-head); font-size:1.6rem; font-weight:800; }
+.stat-mini-label { font-size:0.72rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; margin-top:0.25rem; }
+.danger-zone { border:1px solid var(--red-border,rgba(239,68,68,0.3)); border-radius:var(--radius); padding:1.5rem; background:rgba(239,68,68,0.06); margin-top:2rem; }
+.danger-zone h3 { font-family:var(--font-head); font-size:0.95rem; color:var(--red,#ef4444); margin-bottom:0.5rem; }
+.card-p { padding:1.5rem; }
+</style>
+</head>
+<body>
+<div id="page-loader"><div class="loader-logo"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>Savah<span>Lifestyle</span></div><div class="loader-bar-wrap"><div class="loader-bar"></div></div></div>
+
+<div class="page"><div class="container" style="padding-bottom:3rem">
+  <div class="page-header">
+    <div><h1 class="page-title">My <span>Profile</span></h1><p class="page-subtitle">Manage your account and preferences</p></div>
+    <a href="index.html" class="nav-back"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg> Dashboard</a>
+  </div>
+
+  <div class="profile-hero">
+    <div class="profile-avatar-wrap" onclick="document.getElementById('avatar-input').click()">
+      <div class="profile-avatar" id="profile-avatar-el">U</div>
+      <div class="profile-edit-overlay">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      </div>
+    </div>
+    <input type="file" id="avatar-input" accept="image/*" style="display:none" onchange="uploadAvatar(this)"/>
+    <div class="profile-info">
+      <div class="profile-name" id="disp-name">Loading...</div>
+      <div class="profile-username" id="disp-username"></div>
+      <div class="profile-bio" id="disp-bio">No bio yet</div>
+      <div class="profile-meta">
+        <span class="profile-meta-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg><span id="disp-email">-</span></span>
+        <span class="profile-meta-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Member since <span id="disp-joined">-</span></span>
+      </div>
+    </div>
+    <div style="display:flex;gap:2rem;flex-wrap:wrap">
+      <div class="stat-mini"><div class="stat-mini-val gradient-text-blue" id="p-tasks">0</div><div class="stat-mini-label">Tasks Done</div></div>
+      <div class="stat-mini"><div class="stat-mini-val gradient-text-green" id="p-habits">0</div><div class="stat-mini-label">Habits</div></div>
+      <div class="stat-mini"><div class="stat-mini-val gradient-text-red" id="p-journal">0</div><div class="stat-mini-label">Journal</div></div>
+    </div>
+  </div>
+
+  <div class="profile-tabs">
+    <button class="ptab active" onclick="showPTab('edit',this)">Edit Profile</button>
+    <button class="ptab" onclick="showPTab('security',this)">Security</button>
+    <button class="ptab" onclick="showPTab('preferences',this)">Preferences</button>
+    <button class="ptab" onclick="showPTab('notifications',this)">Notifications</button>
+    <button class="ptab" onclick="showPTab('data',this)">My Data</button>
+    <button class="ptab" onclick="showPTab('privacy',this)">Privacy</button>
+  </div>
+
+  <!-- Edit Profile -->
+  <div class="ptab-panel active" id="ptab-edit">
+    <div class="card card-p">
+      <div class="grid-2" style="gap:1.25rem">
+        <div class="form-group"><label class="form-label">Full Name</label><input class="form-input" type="text" id="f-name" placeholder="Your name"/></div>
+        <div class="form-group"><label class="form-label">Username</label><input class="form-input" type="text" id="f-username" placeholder="@username"/></div>
+        <div class="form-group" style="grid-column:1/-1"><label class="form-label">Email Address</label><input class="form-input" type="email" id="f-email" placeholder="you@email.com"/></div>
+        <div class="form-group" style="grid-column:1/-1"><label class="form-label">Bio</label><textarea class="form-textarea" id="f-bio" placeholder="Tell us about yourself..." rows="3"></textarea></div>
+        <div class="form-group"><label class="form-label">Location</label><input class="form-input" type="text" id="f-location" placeholder="City, Country"/></div>
+        <div class="form-group"><label class="form-label">Website</label><input class="form-input" type="url" id="f-website" placeholder="https://..."/></div>
+      </div>
+      <button class="btn btn-primary" style="margin-top:0.5rem" onclick="saveProfile()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        Save Changes
+      </button>
+    </div>
+  </div>
+
+  <!-- Security -->
+  <div class="ptab-panel" id="ptab-security">
+    <div class="card card-p">
+      <h3 style="font-family:var(--font-head);font-size:1rem;margin-bottom:1.25rem">Change Password</h3>
+      <div class="form-group"><label class="form-label">Current Password</label><input class="form-input" type="password" id="cp-current" placeholder="Current password"/></div>
+      <div class="form-group"><label class="form-label">New Password</label><input class="form-input" type="password" id="cp-new" placeholder="New password (min 8 chars)"/></div>
+      <div class="form-group"><label class="form-label">Confirm New Password</label><input class="form-input" type="password" id="cp-confirm" placeholder="Confirm new password"/></div>
+      <button class="btn btn-primary" onclick="changePassword()">Update Password</button>
+    </div>
+    <div class="card card-p" style="margin-top:1.25rem">
+      <h3 style="font-family:var(--font-head);font-size:1rem;margin-bottom:1rem">Active Sessions</h3>
+      <div class="setting-row">
+        <div><div class="setting-label">This device</div><div class="setting-desc">Current browser session</div></div>
+        <span class="badge badge-green">Active</span>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">Two-Factor Authentication</div><div class="setting-desc">Add extra security with 2FA</div></div>
+        <button class="btn btn-secondary btn-sm">Enable 2FA</button>
+      </div>
+    </div>
+    <div class="danger-zone" style="margin-top:1.25rem">
+      <h3>Danger Zone</h3>
+      <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:1rem">These actions are irreversible.</p>
+      <div style="display:flex;gap:0.75rem;flex-wrap:wrap">
+        <button class="btn btn-secondary btn-sm" onclick="signOutAll()">Sign out everywhere</button>
+        <button class="btn btn-danger btn-sm" onclick="confirmDeleteAccount()">Delete account</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Preferences -->
+  <div class="ptab-panel" id="ptab-preferences">
+    <div class="card card-p">
+      <div class="setting-row">
+        <div><div class="setting-label">Theme</div><div class="setting-desc">Dark or light interface</div></div>
+        <div style="display:flex;gap:0.5rem">
+          <button class="btn btn-secondary btn-sm" id="pref-dark" onclick="setTheme('dark')">Dark</button>
+          <button class="btn btn-secondary btn-sm" id="pref-light" onclick="setTheme('light')">Light</button>
+        </div>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">Language</div><div class="setting-desc">Interface language</div></div>
+        <select class="form-select" style="width:auto" id="pref-lang">
+          <option value="en">English</option>
+          <option value="sw">Swahili</option>
+          <option value="fr">French</option>
+          <option value="es">Spanish</option>
+          <option value="de">German</option>
+        </select>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">Temperature Unit</div><div class="setting-desc">Celsius or Fahrenheit</div></div>
+        <select class="form-select" style="width:auto" id="pref-temp">
+          <option value="C">Celsius (°C)</option>
+          <option value="F">Fahrenheit (°F)</option>
+        </select>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">Currency</div><div class="setting-desc">Default currency for expenses</div></div>
+        <select class="form-select" style="width:auto" id="pref-currency">
+          <option value="USD">USD ($)</option>
+          <option value="EUR">EUR (€)</option>
+          <option value="GBP">GBP (£)</option>
+          <option value="KES">KES (Ksh)</option>
+          <option value="NGN">NGN (₦)</option>
+        </select>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">Week starts on</div><div class="setting-desc">Calendar first day</div></div>
+        <select class="form-select" style="width:auto" id="pref-week">
+          <option value="0">Sunday</option>
+          <option value="1">Monday</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" style="margin-top:0.75rem" onclick="savePreferences()">Save Preferences</button>
+    </div>
+  </div>
+
+  <!-- Notifications -->
+  <div class="ptab-panel" id="ptab-notifications">
+    <div class="card card-p">
+      <div class="setting-row">
+        <div><div class="setting-label">Daily Reminders</div><div class="setting-desc">Get reminded about tasks and habits</div></div>
+        <label class="switch"><div class="switch-track on" id="sw-daily" onclick="toggleSwitch('sw-daily','notif_daily')"><div class="switch-knob"></div></div></label>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">Habit Reminders</div><div class="setting-desc">Nudges when habits are incomplete</div></div>
+        <label class="switch"><div class="switch-track on" id="sw-habits" onclick="toggleSwitch('sw-habits','notif_habits')"><div class="switch-knob"></div></div></label>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">Focus Session Alerts</div><div class="setting-desc">Timer notifications</div></div>
+        <label class="switch"><div class="switch-track on" id="sw-focus" onclick="toggleSwitch('sw-focus','notif_focus')"><div class="switch-knob"></div></div></label>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">Budget Alerts</div><div class="setting-desc">When you approach spending limits</div></div>
+        <label class="switch"><div class="switch-track" id="sw-budget" onclick="toggleSwitch('sw-budget','notif_budget')"><div class="switch-knob"></div></div></label>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">Weekly Summary</div><div class="setting-desc">Productivity digest every Sunday</div></div>
+        <label class="switch"><div class="switch-track on" id="sw-weekly" onclick="toggleSwitch('sw-weekly','notif_weekly')"><div class="switch-knob"></div></div></label>
+      </div>
+    </div>
+  </div>
+
+  <!-- My Data -->
+  <div class="ptab-panel" id="ptab-data">
+    <div class="card card-p">
+      <h3 style="font-family:var(--font-head);font-size:1rem;margin-bottom:1rem">Data Overview</h3>
+      <div class="grid-4" style="margin-bottom:1.5rem;gap:1rem">
+        <div class="card" style="padding:1rem;text-align:center"><div style="font-family:var(--font-head);font-size:1.5rem;font-weight:800;color:var(--blue)" id="data-tasks">0</div><div style="font-size:0.72rem;color:var(--text-muted);margin-top:0.2rem">Tasks</div></div>
+        <div class="card" style="padding:1rem;text-align:center"><div style="font-family:var(--font-head);font-size:1.5rem;font-weight:800;color:var(--green)" id="data-habits">0</div><div style="font-size:0.72rem;color:var(--text-muted);margin-top:0.2rem">Habits</div></div>
+        <div class="card" style="padding:1rem;text-align:center"><div style="font-family:var(--font-head);font-size:1.5rem;font-weight:800;color:var(--purple)" id="data-journals">0</div><div style="font-size:0.72rem;color:var(--text-muted);margin-top:0.2rem">Journal Entries</div></div>
+        <div class="card" style="padding:1rem;text-align:center"><div style="font-family:var(--font-head);font-size:1.5rem;font-weight:800;color:var(--red)" id="data-expenses">0</div><div style="font-size:0.72rem;color:var(--text-muted);margin-top:0.2rem">Expenses</div></div>
+      </div>
+      <div style="display:flex;gap:0.75rem;flex-wrap:wrap">
+        <button class="btn btn-secondary" onclick="exportData()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export All Data (JSON)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Privacy -->
+  <div class="ptab-panel" id="ptab-privacy">
+    <div class="card card-p">
+      <div class="setting-row">
+        <div><div class="setting-label">Profile Visibility</div><div class="setting-desc">Who can see your profile</div></div>
+        <select class="form-select" style="width:auto">
+          <option>Private</option>
+          <option>Friends Only</option>
+          <option>Public</option>
+        </select>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">Analytics</div><div class="setting-desc">Help improve SavahLifestyle</div></div>
+        <label class="switch"><div class="switch-track on" id="sw-analytics" onclick="this.classList.toggle('on')"><div class="switch-knob"></div></div></label>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">Cookie Preferences</div><div class="setting-desc">Manage cookie settings</div></div>
+        <a href="cookies.html" class="btn btn-secondary btn-sm">Manage Cookies</a>
+      </div>
+    </div>
+  </div>
+</div></div>
+
+<script>
+function showPTab(name, btn) {
+  document.querySelectorAll('.ptab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.ptab').forEach(b => b.classList.remove('active'));
+  document.getElementById('ptab-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+
+function toggleSwitch(id) {
+  const el = document.getElementById(id);
+  el.classList.toggle('on');
+  Toast.show(el.classList.contains('on') ? 'Enabled' : 'Disabled', 'info', 1500);
+}
+
+function loadProfile() {
+  const user = Auth.getUser();
+  if (!user) { window.location.href = 'login.html'; return; }
+  const initials = (user.name || user.email || 'U').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+  const avEl = document.getElementById('profile-avatar-el');
+  if (user.avatar) { avEl.innerHTML = `<img src="${user.avatar}" alt="avatar">`; }
+  else { avEl.textContent = initials; }
+  document.getElementById('disp-name').textContent    = user.name || 'User';
+  document.getElementById('disp-username').textContent = user.username ? '@' + user.username : '';
+  document.getElementById('disp-bio').textContent      = user.bio || 'No bio yet';
+  document.getElementById('disp-email').textContent    = user.email || '-';
+  document.getElementById('disp-joined').textContent   = user.createdAt ? new Date(user.createdAt).toLocaleDateString() : '-';
+  document.getElementById('f-name').value     = user.name     || '';
+  document.getElementById('f-username').value = user.username || '';
+  document.getElementById('f-email').value    = user.email    || '';
+  document.getElementById('f-bio').value      = user.bio      || '';
+  document.getElementById('f-location').value = user.location || '';
+  document.getElementById('f-website').value  = user.website  || '';
+  const tasks    = JSON.parse(localStorage.getItem('savah:todos')    || '[]');
+  const habits   = JSON.parse(localStorage.getItem('savah:habits')   || '[]');
+  const journals = JSON.parse(localStorage.getItem('savah:journal')  || '{}');
+  const expenses = JSON.parse(localStorage.getItem('savah:expenses') || '[]');
+  document.getElementById('p-tasks').textContent    = tasks.filter(t => t.done).length;
+  document.getElementById('p-habits').textContent   = habits.length;
+  document.getElementById('p-journal').textContent  = Object.keys(journals).length;
+  document.getElementById('data-tasks').textContent    = tasks.length;
+  document.getElementById('data-habits').textContent   = habits.length;
+  document.getElementById('data-journals').textContent = Object.keys(journals).length;
+  document.getElementById('data-expenses').textContent = expenses.length;
+  const theme = document.documentElement.getAttribute('data-theme');
+  document.getElementById('pref-dark').classList.toggle('btn-primary', theme === 'dark');
+  document.getElementById('pref-light').classList.toggle('btn-primary', theme === 'light');
+}
+
+function setTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  localStorage.setItem('sl:theme', t);
+  document.getElementById('pref-dark').classList.toggle('btn-primary', t === 'dark');
+  document.getElementById('pref-light').classList.toggle('btn-primary', t === 'light');
+  Toast.show(`Switched to ${t} mode`, 'success', 1500);
+}
+
+function saveProfile() {
+  const user = Auth.getUser() || {};
+  user.name     = document.getElementById('f-name').value.trim();
+  user.username = document.getElementById('f-username').value.trim().replace('@','');
+  user.email    = document.getElementById('f-email').value.trim();
+  user.bio      = document.getElementById('f-bio').value.trim();
+  user.location = document.getElementById('f-location').value.trim();
+  user.website  = document.getElementById('f-website').value.trim();
+  localStorage.setItem('sl:user', JSON.stringify(user));
+  loadProfile();
+  Toast.show('Profile saved!', 'success');
+}
+
+function savePreferences() {
+  localStorage.setItem('sl:pref:lang',     document.getElementById('pref-lang').value);
+  localStorage.setItem('sl:pref:temp',     document.getElementById('pref-temp').value);
+  localStorage.setItem('sl:pref:currency', document.getElementById('pref-currency').value);
+  localStorage.setItem('sl:pref:week',     document.getElementById('pref-week').value);
+  Toast.show('Preferences saved!', 'success');
+}
+
+function uploadAvatar(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) { Toast.show('Image must be under 5MB', 'warning'); return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    const user = Auth.getUser() || {};
+    user.avatar = e.target.result;
+    localStorage.setItem('sl:user', JSON.stringify(user));
+    loadProfile();
+    Toast.show('Avatar updated!', 'success');
+  };
+  reader.readAsDataURL(file);
+}
+
+async function changePassword() {
+  const cur = document.getElementById('cp-current').value;
+  const nw  = document.getElementById('cp-new').value;
+  const cf  = document.getElementById('cp-confirm').value;
+  if (!cur || !nw || !cf) { Toast.show('Fill in all fields', 'warning'); return; }
+  if (nw !== cf) { Toast.show('Passwords do not match', 'error'); return; }
+  if (nw.length < 8) { Toast.show('Password must be at least 8 characters', 'warning'); return; }
+  const user = Auth.getUser();
+  if (!user) { Toast.show('Not logged in', 'error'); return; }
+  const r = await LocalAuth.changePassword(user.id, cur, nw);
+  if (r.error) { Toast.show(r.error, 'error'); return; }
+  Toast.show('Password updated!', 'success');
+  document.getElementById('cp-current').value = '';
+  document.getElementById('cp-new').value = '';
+  document.getElementById('cp-confirm').value = '';
+}
+
+function exportData() {
+  const data = {};
+  for (let k of Object.keys(localStorage)) {
+    if (k.startsWith('savah:') || k.startsWith('sl:')) data[k] = localStorage.getItem(k);
+  }
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'savahlifestyle_export.json';
+  a.click();
+  Toast.show('Data exported!', 'success');
+}
+
+function signOutAll() { Auth.logout(); }
+
+function confirmDeleteAccount() {
+  if (confirm('This will permanently delete your account and all data. This cannot be undone.')) {
+    localStorage.clear();
+    window.location.href = 'login.html';
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  buildNav('profile');
+  buildFooter();
+  loadProfile();
+});
+</script>
+</body></html>

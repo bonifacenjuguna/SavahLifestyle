@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Calendar Planner — SavahLifestyle</title>
+<link rel="stylesheet" href="css/style.css"/>
+<style>
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;background:var(--border);border-radius:var(--radius)}
+.cal-header-day{background:var(--bg2);padding:0.6rem;text-align:center;font-size:0.72rem;font-weight:700;color:var(--text-muted);text-transform:uppercase}
+.cal-day{background:var(--bg2);padding:0.5rem;min-height:80px;cursor:pointer;transition:var(--transition);position:relative}
+.cal-day:hover{background:var(--card-hover)}
+.cal-day.other-month{opacity:0.3}
+.cal-day.today{background:var(--blue-dim);border:1px solid var(--border-accent)}
+.cal-day.selected{background:rgba(240,180,41,0.2)}
+.cal-num{font-size:0.78rem;font-weight:600;color:var(--text);margin-bottom:0.3rem}
+.cal-day.today .cal-num{color:var(--blue);font-weight:800}
+.cal-event{font-size:0.65rem;background:var(--blue-dim);color:var(--blue);border-radius:3px;padding:0.1rem 0.3rem;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+</style>
+<script src="js/app.js" defer></script>
+<script src="js/localAuth.js" defer></script>
+<script src="js/nav.js" defer></script>
+</head>
+<body>
+<div class="page"><div class="container">
+  <div class="page-header">
+    <div><h1 class="page-title">Calendar <span>Planner</span></h1><p class="page-subtitle">Plan and organize your schedule</p></div>
+    <div style="display:flex;align-items:center;gap:0.75rem">
+      <button class="btn btn-secondary btn-icon" onclick="changeMonth(-1)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg></button>
+      <span style="font-family:var(--font-head);font-weight:700;font-size:1rem" id="month-label"></span>
+      <button class="btn btn-secondary btn-icon" onclick="changeMonth(1)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></button>
+      <button class="btn btn-primary" onclick="gotoToday()">Today</button>
+    </div>
+  </div>
+  <div class="grid-2" style="align-items:start">
+    <div>
+      <div class="cal-grid" id="cal-grid"></div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="card-header"><div class="card-title" id="selected-date-title">Select a date</div></div>
+        <div id="day-events" style="margin-bottom:1rem"></div>
+        <div style="display:flex;gap:0.5rem">
+          <input type="text" id="new-event" placeholder="Add event or reminder..." style="flex:1"/>
+          <button class="btn btn-primary" onclick="addEvent()">Add</button>
+        </div>
+      </div>
+      <div class="card" style="margin-top:1rem">
+        <div class="card-title" style="margin-bottom:1rem">Upcoming Events</div>
+        <div id="upcoming-events"></div>
+      </div>
+    </div>
+  </div>
+</div></div>
+<div class="modal-overlay" id="event-modal">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title" id="modal-date-title"></div><button class="btn-icon btn" onclick="closeModal('event-modal')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <div id="modal-events-list"></div>
+    <div style="display:flex;gap:0.5rem;margin-top:1rem">
+      <input type="text" id="modal-event-input" placeholder="New event..." style="flex:1"/>
+      <button class="btn btn-primary" onclick="addModalEvent()">Add</button>
+    </div>
+  </div>
+</div>
+<script>
+let events=JSON.parse(localStorage.getItem('savah:calendar-events')||'{}');
+let viewYear=new Date().getFullYear(),viewMonth=new Date().getMonth();
+let selectedDate=new Date().toISOString().split('T')[0];
+
+function changeMonth(d){viewMonth+=d;if(viewMonth>11){viewMonth=0;viewYear++;};if(viewMonth<0){viewMonth=11;viewYear--;};renderCal();}
+function gotoToday(){viewYear=new Date().getFullYear();viewMonth=new Date().getMonth();selectedDate=new Date().toISOString().split('T')[0];renderCal();renderDayPanel();}
+
+function renderCal(){
+  const today=new Date().toISOString().split('T')[0];
+  const monthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('month-label').textContent=monthNames[viewMonth]+' '+viewYear;
+  const firstDay=new Date(viewYear,viewMonth,1).getDay();
+  const daysInMonth=new Date(viewYear,viewMonth+1,0).getDate();
+  const daysInPrev=new Date(viewYear,viewMonth,0).getDate();
+  const dayNames=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  let html=dayNames.map(d=>`<div class="cal-header-day">${d}</div>`).join('');
+  for(let i=firstDay-1;i>=0;i--){
+    const d=new Date(viewYear,viewMonth-1,daysInPrev-i);
+    const key=d.toISOString().split('T')[0];
+    html+=`<div class="cal-day other-month" onclick="selectDate('${key}')""><div class="cal-num">${daysInPrev-i}</div></div>`;
+  }
+  for(let d=1;d<=daysInMonth;d++){
+    const dt=new Date(viewYear,viewMonth,d);
+    const key=dt.toISOString().split('T')[0];
+    const isToday=key===today;
+    const isSelected=key===selectedDate;
+    const dayEvents=events[key]||[];
+    const evHtml=dayEvents.slice(0,2).map(e=>`<div class="cal-event">${e}</div>`).join('')+(dayEvents.length>2?`<div class="cal-event">+${dayEvents.length-2} more</div>`:'');
+    html+=`<div class="cal-day${isToday?' today':''}${isSelected?' selected':''}" onclick="selectDate('${key}')"><div class="cal-num">${d}</div>${evHtml}</div>`;
+  }
+  const remaining=42-(firstDay+daysInMonth);
+  for(let d=1;d<=remaining;d++){
+    const dt=new Date(viewYear,viewMonth+1,d);
+    const key=dt.toISOString().split('T')[0];
+    html+=`<div class="cal-day other-month" onclick="selectDate('${key}')""><div class="cal-num">${d}</div></div>`;
+  }
+  document.getElementById('cal-grid').innerHTML=html;
+}
+
+function selectDate(date){selectedDate=date;renderCal();renderDayPanel();}
+
+function addEvent(){
+  const text=document.getElementById('new-event').value.trim();
+  if(!text||!selectedDate) return;
+  if(!events[selectedDate]) events[selectedDate]=[];
+  events[selectedDate].push(text);
+  save();
+  document.getElementById('new-event').value='';
+  renderDayPanel();renderCal();
+  Toast.show('Event added!','success');
+}
+
+function addModalEvent(){
+  const text=document.getElementById('modal-event-input').value.trim();
+  if(!text) return;
+  if(!events[selectedDate]) events[selectedDate]=[];
+  events[selectedDate].push(text);
+  save();
+  document.getElementById('modal-event-input').value='';
+  renderDayPanel();renderCal();renderModalEvents();
+}
+
+function renderDayPanel(){
+  const d=new Date(selectedDate+'T12:00:00');
+  document.getElementById('selected-date-title').textContent=d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+  const dayEvs=events[selectedDate]||[];
+  if(!dayEvs.length) document.getElementById('day-events').innerHTML='<div style="color:var(--text-muted);font-size:0.85rem;margin-bottom:0.75rem">No events — add one below!</div>';
+  else document.getElementById('day-events').innerHTML=dayEvs.map((e,i)=>`
+    <div style="display:flex;align-items:center;gap:0.5rem;padding:0.5rem;background:var(--card);border-radius:8px;margin-bottom:0.35rem">
+      <div style="width:6px;height:6px;border-radius:50%;background:var(--blue);flex-shrink:0"></div>
+      <span style="flex:1;font-size:0.88rem">${e}</span>
+      <button class="btn-icon btn" onclick="deleteEvent(${i})" style="width:24px;height:24px;border-radius:6px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>`).join('');
+  renderUpcoming();
+}
+
+function deleteEvent(i){events[selectedDate].splice(i,1);if(!events[selectedDate].length) delete events[selectedDate];save();renderDayPanel();renderCal();}
+
+function renderUpcoming(){
+  const today=new Date().toISOString().split('T')[0];
+  const upcoming=Object.entries(events).filter(([d])=>d>=today).sort((a,b)=>a[0].localeCompare(b[0])).slice(0,8);
+  if(!upcoming.length) { document.getElementById('upcoming-events').innerHTML='<div style="color:var(--text-muted);font-size:0.85rem">No upcoming events</div>'; return; }
+  document.getElementById('upcoming-events').innerHTML=upcoming.map(([date,evs])=>`
+    <div style="margin-bottom:0.75rem">
+      <div style="font-size:0.72rem;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.25rem">${new Date(date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})}</div>
+      ${evs.map(e=>`<div style="font-size:0.82rem;color:var(--text);padding:0.2rem 0">• ${e}</div>`).join('')}
+    </div>
+  `).join('');
+}
+
+function save(){localStorage.setItem('savah:calendar-events',JSON.stringify(events));}
+renderCal();renderDayPanel();
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  buildNav('calendar');
+  buildFooter();
+});
+</script>
+</body></html>

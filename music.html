@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Focus Music — SavahLifestyle</title>
+  <link rel="stylesheet" href="css/style.css"/>
+  <script src="js/app.js" defer></script>
+  <script src="js/localAuth.js" defer></script>
+<script src="js/nav.js" defer></script>
+  <style>
+    .sound-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:1rem; }
+    @media(max-width:480px) { .sound-grid { grid-template-columns:repeat(2,1fr); } }
+
+    .sound-btn {
+      background:var(--card); border:2px solid var(--glass-border);
+      border-radius:var(--radius-lg); padding:1.25rem 1rem 1rem;
+      text-align:center; cursor:pointer; transition:var(--transition);
+      position:relative; overflow:hidden; user-select:none;
+      backdrop-filter:blur(10px);
+    }
+    .sound-btn::before {
+      content:''; position:absolute; inset:0; opacity:0;
+      background:var(--s-bg, var(--blue-dim));
+      transition:opacity 0.3s;
+    }
+    .sound-btn:hover { border-color:var(--s-border,var(--blue-border)); transform:translateY(-3px); }
+    .sound-btn:hover::before { opacity:0.5; }
+    .sound-btn.active { border-color:var(--s-border,var(--blue-border)); }
+    .sound-btn.active::before { opacity:1; }
+
+    .sound-icon-wrap {
+      width:60px; height:60px; border-radius:50%;
+      background:var(--s-bg, var(--blue-dim));
+      border:2px solid var(--s-border,var(--blue-border));
+      display:flex; align-items:center; justify-content:center;
+      margin:0 auto 0.9rem; color:var(--s-ic, var(--blue));
+      transition:var(--transition); position:relative; z-index:1;
+    }
+    .sound-btn.active .sound-icon-wrap {
+      box-shadow:0 0 20px var(--s-ic,var(--blue));
+    }
+    .sound-btn.active .sound-icon-wrap svg { animation:breathe 3s ease-in-out infinite; }
+    @keyframes breathe { 0%,100%{transform:scale(1);} 50%{transform:scale(1.18);} }
+
+    .sound-name { font-family:var(--font-head); font-weight:700; font-size:0.9rem; margin-bottom:0.2rem; position:relative;z-index:1; }
+    .sound-desc { font-size:0.72rem; color:var(--text-muted); margin-bottom:0.6rem; position:relative;z-index:1; }
+
+    .eq-bars {
+      display:none; gap:2px; justify-content:center; height:16px; align-items:flex-end;
+      position:relative; z-index:1;
+    }
+    .sound-btn.active .eq-bars { display:flex; }
+    .eq-bar { width:3px; border-radius:2px; background:var(--s-ic,var(--blue)); }
+    .eq-bar:nth-child(1){animation:eq .65s .00s ease infinite alternate;}
+    .eq-bar:nth-child(2){animation:eq .65s .13s ease infinite alternate;}
+    .eq-bar:nth-child(3){animation:eq .65s .26s ease infinite alternate;}
+    .eq-bar:nth-child(4){animation:eq .65s .39s ease infinite alternate;}
+    .eq-bar:nth-child(5){animation:eq .65s .52s ease infinite alternate;}
+    @keyframes eq { from{height:2px;} to{height:14px;} }
+
+    .sound-vol { position:relative;z-index:1; display:none; margin-top:0.5rem; padding:0 0.5rem; }
+    .sound-btn.active .sound-vol { display:block; }
+
+    /* Timer */
+    .focus-timer {
+      background:var(--card); border:1px solid var(--glass-border);
+      border-radius:var(--radius); padding:1.5rem;
+      display:flex; align-items:center; justify-content:space-between;
+      gap:1.5rem; flex-wrap:wrap; margin-bottom:2rem;
+      backdrop-filter:blur(10px);
+    }
+    .timer-display { font-family:var(--font-mono); font-size:2.75rem; font-weight:700; line-height:1; }
+    .timer-presets { display:flex; gap:0.4rem; flex-wrap:wrap; }
+    .tpre { padding:0.35rem 0.8rem; border-radius:20px; font-size:0.78rem; font-weight:600; border:1px solid var(--border); background:transparent; color:var(--text-muted); cursor:pointer; transition:var(--transition); }
+    .tpre:hover { border-color:var(--blue); color:var(--blue); }
+    .tpre.active { background:var(--blue-dim); border-color:var(--blue); color:var(--blue); }
+  </style>
+</head>
+<body>
+<div id="page-loader">
+  <div class="loader-logo"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>Savah<span>Lifestyle</span></div>
+  <div class="loader-bar-wrap"><div class="loader-bar"></div></div>
+</div>
+<div class="page">
+<div class="container" style="padding-top:2rem;padding-bottom:3rem">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Focus <span>Music</span></h1>
+      <p class="page-subtitle">Synthesized ambient sounds — mix multiple for the perfect environment</p>
+    </div>
+    <a href="index.html" class="nav-back"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>Back</a>
+  </div>
+
+  <!-- Timer -->
+  <div class="focus-timer">
+    <div>
+      <div style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.3rem;font-weight:700">Focus Timer</div>
+      <div class="timer-display gradient-text" id="t-display">25:00</div>
+      <div style="font-size:.75rem;color:var(--text-muted);margin-top:.25rem" id="t-status">Pomodoro ready</div>
+    </div>
+    <div>
+      <div class="timer-presets" style="margin-bottom:.75rem">
+        <button class="tpre active" onclick="setTimer(25,this)">25m</button>
+        <button class="tpre" onclick="setTimer(5,this)">5m</button>
+        <button class="tpre" onclick="setTimer(15,this)">15m</button>
+        <button class="tpre" onclick="setTimer(45,this)">45m</button>
+        <button class="tpre" onclick="setTimer(60,this)">60m</button>
+      </div>
+      <div style="display:flex;gap:.5rem">
+        <button class="btn btn-primary btn-sm" id="t-btn" onclick="toggleTimer()">
+          <svg id="t-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          <span id="t-label">Start</span>
+        </button>
+        <button class="btn btn-secondary btn-sm" onclick="resetTimer()">Reset</button>
+      </div>
+    </div>
+    <div style="min-width:220px">
+      <div style="font-size:.8rem;font-weight:600;margin-bottom:.4rem">Master Volume</div>
+      <input type="range" id="master-vol" min="0" max="1" step=".01" value=".6" oninput="setMasterVol(+this.value)" style="width:100%"/>
+      <div style="font-size:.72rem;color:var(--text-muted);margin-top:.2rem" id="vol-pct">60%</div>
+    </div>
+  </div>
+
+  <!-- Now playing -->
+  <div class="card card-p" style="margin-bottom:1.5rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+    <div id="np-eq" style="display:none;gap:3px;align-items:flex-end;height:20px">
+      <div style="width:3px;border-radius:2px;background:var(--blue);animation:eq .5s .0s infinite alternate"></div>
+      <div style="width:3px;border-radius:2px;background:var(--green);animation:eq .5s .1s infinite alternate"></div>
+      <div style="width:3px;border-radius:2px;background:var(--purple);animation:eq .5s .2s infinite alternate"></div>
+      <div style="width:3px;border-radius:2px;background:var(--blue);animation:eq .5s .3s infinite alternate"></div>
+    </div>
+    <div style="flex:1">
+      <div style="font-family:var(--font-head);font-weight:700;font-size:.9rem" id="np-label">Nothing playing — pick a sound below</div>
+      <div style="font-size:.75rem;color:var(--text-muted)">You can mix multiple sounds simultaneously</div>
+    </div>
+    <button class="btn btn-secondary btn-sm" onclick="stopAll()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+      Stop All
+    </button>
+  </div>
+
+  <!-- Mix presets -->
+  <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.5rem">
+    <span style="font-size:.8rem;font-weight:600;color:var(--text-muted);align-self:center">Presets:</span>
+    <button class="btn btn-secondary btn-sm" onclick="applyPreset(['rain','forest'])">Forest Rain</button>
+    <button class="btn btn-secondary btn-sm" onclick="applyPreset(['cafe','city'])">Café</button>
+    <button class="btn btn-secondary btn-sm" onclick="applyPreset(['ocean','wind'])">Coastal</button>
+    <button class="btn btn-secondary btn-sm" onclick="applyPreset(['fire','rain'])">Cozy Cabin</button>
+    <button class="btn btn-secondary btn-sm" onclick="applyPreset(['space','drone'])">Deep Space</button>
+    <button class="btn btn-secondary btn-sm" onclick="applyPreset(['thunder','rain','wind'])">Storm</button>
+  </div>
+
+  <!-- Sounds grid -->
+  <div class="sound-grid" id="sounds-grid"></div>
+</div>
+</div>
+
+<script>
+const SOUNDS = [
+  { id:'rain',    name:'Rain',          desc:'Steady gentle rainfall',       ic:'#3b82f6', bg:'rgba(59,130,246,.15)',  br:'rgba(59,130,246,.4)' },
+  { id:'thunder', name:'Thunderstorm',  desc:'Rain with rolling thunder',    ic:'#8b5cf6', bg:'rgba(139,92,246,.15)', br:'rgba(139,92,246,.4)' },
+  { id:'ocean',   name:'Ocean Waves',   desc:'Rhythmic crashing waves',      ic:'#06b6d4', bg:'rgba(6,182,212,.15)',  br:'rgba(6,182,212,.4)'  },
+  { id:'forest',  name:'Forest',        desc:'Birds, insects & wind',        ic:'#10b981', bg:'rgba(16,185,129,.15)', br:'rgba(16,185,129,.4)' },
+  { id:'fire',    name:'Fireplace',     desc:'Crackling fire',               ic:'#f97316', bg:'rgba(249,115,22,.15)', br:'rgba(249,115,22,.4)' },
+  { id:'wind',    name:'Wind',          desc:'Howling mountain wind',        ic:'#94a3b8', bg:'rgba(100,116,139,.15)',br:'rgba(100,116,139,.4)'},
+  { id:'cafe',    name:'Café',          desc:'Coffee shop chatter',          ic:'#ca8a04', bg:'rgba(202,138,4,.15)',  br:'rgba(202,138,4,.4)'  },
+  { id:'space',   name:'Deep Space',    desc:'Ethereal cosmic ambience',     ic:'#6366f1', bg:'rgba(99,102,241,.15)', br:'rgba(99,102,241,.4)' },
+  { id:'library', name:'Library',       desc:'Quiet pages & ambient hum',    ic:'#10b981', bg:'rgba(16,185,129,.15)', br:'rgba(16,185,129,.4)' },
+  { id:'city',    name:'City',          desc:'Urban street sounds',          ic:'#f97316', bg:'rgba(249,115,22,.15)', br:'rgba(249,115,22,.4)' },
+  { id:'river',   name:'River',         desc:'Babbling stream & flow',       ic:'#06b6d4', bg:'rgba(6,182,212,.15)',  br:'rgba(6,182,212,.4)'  },
+  { id:'drone',   name:'Meditation',    desc:'Deep resonant drone tones',    ic:'#8b5cf6', bg:'rgba(139,92,246,.15)', br:'rgba(139,92,246,.4)' },
+];
+
+const ICONS = {
+  rain:    `<path d="M20 16.6A5 5 0 0 0 18 7h-1.3A8 8 0 1 0 4 15.3"/><line x1="8" y1="19" x2="8" y2="21"/><line x1="8" y1="13" x2="8" y2="15"/><line x1="16" y1="19" x2="16" y2="21"/><line x1="16" y1="13" x2="16" y2="15"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="12" y1="15" x2="12" y2="17"/>`,
+  thunder: `<path d="M19 16.9A5 5 0 0 0 18 7h-1.3a8 8 0 1 0-11.6 9"/><polyline points="13 11 9 17 15 17 11 23"/>`,
+  ocean:   `<path d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/>`,
+  forest:  `<path d="M17 22V2L7 7l10 5-10 5 10 5"/><path d="M3 5l1 4"/>`,
+  fire:    `<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>`,
+  wind:    `<path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/>`,
+  cafe:    `<path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V8z"/><line x1="6" y1="2" x2="6" y2="4"/><line x1="10" y1="2" x2="10" y2="4"/><line x1="14" y1="2" x2="14" y2="4"/>`,
+  space:   `<circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>`,
+  library: `<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>`,
+  city:    `<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>`,
+  river:   `<path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>`,
+  drone:   `<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>`,
+};
+
+/* ── Audio Engine ── */
+let masterVol = 0.6;
+const actives = {}; // id -> { ctx, nodes }
+
+function getCtx() {
+  return new (window.AudioContext || window.webkitAudioContext)();
+}
+
+/* Real synthesized sounds per id */
+function buildSound(id, ctx, gainNode) {
+  const sr = ctx.sampleRate;
+
+  if (id === 'rain') {
+    // White noise + low pass filter = rain
+    const buf = ctx.createBuffer(2, sr * 3, sr);
+    for (let c = 0; c < 2; c++) {
+      const d = buf.getChannelData(c);
+      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    }
+    const src = ctx.createBufferSource(); src.buffer = buf; src.loop = true;
+    const lpf = ctx.createBiquadFilter(); lpf.type = 'lowpass'; lpf.frequency.value = 1200; lpf.Q.value = 0.5;
+    const lpf2 = ctx.createBiquadFilter(); lpf2.type = 'lowpass'; lpf2.frequency.value = 600;
+    src.connect(lpf); lpf.connect(lpf2); lpf2.connect(gainNode);
+    src.start(); return [src];
+  }
+
+  if (id === 'thunder') {
+    // Rain base + periodic thunder rumble
+    const buf = ctx.createBuffer(1, sr * 4, sr);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * 0.4;
+    const src = ctx.createBufferSource(); src.buffer = buf; src.loop = true;
+    const lpf = ctx.createBiquadFilter(); lpf.type = 'lowpass'; lpf.frequency.value = 800;
+    src.connect(lpf); lpf.connect(gainNode); src.start();
+    // Periodic thunder boom via oscillator
+    const scheduleThunder = () => {
+      const osc = ctx.createOscillator(); osc.frequency.value = 60;
+      const tg = ctx.createGain(); tg.gain.setValueAtTime(0, ctx.currentTime);
+      tg.gain.linearRampToValueAtTime(0.6, ctx.currentTime + 0.1);
+      tg.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 2.5);
+      osc.connect(tg); tg.connect(gainNode); osc.start(); osc.stop(ctx.currentTime + 2.5);
+      setTimeout(scheduleThunder, 8000 + Math.random() * 12000);
+    };
+    setTimeout(scheduleThunder, 3000 + Math.random() * 5000);
+    return [src];
+  }
+
+  if (id === 'ocean') {
+    // Brown noise shaped like waves with slow LFO
+    const buf = ctx.createBuffer(2, sr * 4, sr);
+    for (let c = 0; c < 2; c++) {
+      const d = buf.getChannelData(c);
+      let last = 0;
+      for (let i = 0; i < d.length; i++) {
+        const w = Math.random() * 2 - 1;
+        last = (last + 0.02 * w) / 1.02; d[i] = last * 3.5;
+      }
+    }
+    const src = ctx.createBufferSource(); src.buffer = buf; src.loop = true;
+    const lpf = ctx.createBiquadFilter(); lpf.type = 'lowpass'; lpf.frequency.value = 700;
+    // LFO for wave rhythm
+    const lfo = ctx.createOscillator(); lfo.frequency.value = 0.12;
+    const lfoGain = ctx.createGain(); lfoGain.gain.value = 0.45;
+    const waveGain = ctx.createGain(); waveGain.gain.value = 0.55;
+    lfo.connect(lfoGain); lfoGain.connect(waveGain.gain);
+    src.connect(lpf); lpf.connect(waveGain); waveGain.connect(gainNode);
+    src.start(); lfo.start(); return [src, lfo];
+  }
+
+  if (id === 'forest') {
+    // Pink noise (nature base) + bird chirps
+    const buf = ctx.createBuffer(1, sr * 3, sr);
+    const d = buf.getChannelData(0);
+    let b0=0,b1=0,b2=0,b3=0,b4=0,b5=0,b6=0;
+    for (let i = 0; i < d.length; i++) {
+      const w = Math.random() * 2 - 1;
+      b0=.99886*b0+w*.0555179; b1=.99332*b1+w*.0750759; b2=.969*b2+w*.153852;
+      b3=.8665*b3+w*.3104856; b4=.55*b4+w*.5329522; b5=-.7616*b5-w*.016898;
+      d[i] = (b0+b1+b2+b3+b4+b5+b6+w*.5362)/5.512*0.5; b6=w*.115926;
+    }
+    const src = ctx.createBufferSource(); src.buffer = buf; src.loop = true;
+    const hpf = ctx.createBiquadFilter(); hpf.type = 'highpass'; hpf.frequency.value = 400;
+    src.connect(hpf); hpf.connect(gainNode); src.start();
+    // Bird chirps
+    const chirp = () => {
+      const freq = 2000 + Math.random() * 3000;
+      const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = freq;
+      const g = ctx.createGain(); g.gain.setValueAtTime(0, ctx.currentTime);
+      g.gain.linearRampToValueAtTime(0.08, ctx.currentTime + 0.05);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3 + Math.random() * 0.2);
+      o.connect(g); g.connect(gainNode); o.start(); o.stop(ctx.currentTime + 0.5);
+      setTimeout(chirp, 400 + Math.random() * 2500);
+    };
+    chirp(); return [src];
+  }
+
+  if (id === 'fire') {
+    // Filtered brown noise with crackle impulses
+    const buf = ctx.createBuffer(1, sr * 3, sr);
+    const d = buf.getChannelData(0);
+    let last = 0;
+    for (let i = 0; i < d.length; i++) {
+      const w = Math.random() * 2 - 1;
+      last = (last + 0.04 * w) / 1.04; d[i] = last * 3;
+    }
+    const src = ctx.createBufferSource(); src.buffer = buf; src.loop = true;
+    const lpf = ctx.createBiquadFilter(); lpf.type = 'lowpass'; lpf.frequency.value = 600;
+    const hpf = ctx.createBiquadFilter(); hpf.type = 'highpass'; hpf.frequency.value = 100;
+    src.connect(lpf); lpf.connect(hpf); hpf.connect(gainNode); src.start();
+    // Crackle snaps
+    const crackle = () => {
+      const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = 200 + Math.random() * 600;
+      const g = ctx.createGain(); g.gain.setValueAtTime(0.15, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.04 + Math.random() * 0.06);
+      o.connect(g); g.connect(gainNode); o.start(); o.stop(ctx.currentTime + 0.1);
+      setTimeout(crackle, 150 + Math.random() * 600);
+    };
+    crackle(); return [src];
+  }
+
+  if (id === 'wind') {
+    // Band-pass filtered noise with slow LFO
+    const buf = ctx.createBuffer(1, sr * 4, sr);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    const src = ctx.createBufferSource(); src.buffer = buf; src.loop = true;
+    const bpf = ctx.createBiquadFilter(); bpf.type = 'bandpass'; bpf.frequency.value = 800; bpf.Q.value = 0.8;
+    const lfo = ctx.createOscillator(); lfo.frequency.value = 0.08;
+    const lfoG = ctx.createGain(); lfoG.gain.value = 0.5;
+    const windG = ctx.createGain(); windG.gain.value = 0.5;
+    lfo.connect(lfoG); lfoG.connect(windG.gain);
+    src.connect(bpf); bpf.connect(windG); windG.connect(gainNode);
+    src.start(); lfo.start(); return [src, lfo];
+  }
+
+  if (id === 'cafe') {
+    // Multiple oscillators creating murmur + hiss
+    const nodes = [];
+    const buf = ctx.createBuffer(1, sr * 5, sr);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    const src = ctx.createBufferSource(); src.buffer = buf; src.loop = true;
+    const bpf1 = ctx.createBiquadFilter(); bpf1.type = 'bandpass'; bpf1.frequency.value = 250; bpf1.Q.value = 0.4;
+    const bpf2 = ctx.createBiquadFilter(); bpf2.type = 'bandpass'; bpf2.frequency.value = 1800; bpf2.Q.value = 0.5;
+    const merge = ctx.createGain(); merge.gain.value = 0.5;
+    src.connect(bpf1); src.connect(bpf2); bpf1.connect(merge); bpf2.connect(merge); merge.connect(gainNode);
+    src.start(); nodes.push(src);
+    // Occasional spoon clink
+    const clink = () => {
+      const o = ctx.createOscillator(); o.frequency.value = 2400 + Math.random() * 800;
+      const g = ctx.createGain(); g.gain.setValueAtTime(0.06, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+      o.connect(g); g.connect(gainNode); o.start(); o.stop(ctx.currentTime + 0.45);
+      setTimeout(clink, 4000 + Math.random() * 8000);
+    };
+    clink(); return nodes;
+  }
+
+  if (id === 'space') {
+    // Deep pads using multiple slow oscillators
+    const nodes = [];
+    const freqs = [55, 82.5, 110, 165];
+    freqs.forEach((f, i) => {
+      const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = f;
+      const trem = ctx.createOscillator(); trem.frequency.value = 0.05 + i * 0.02;
+      const tremG = ctx.createGain(); tremG.gain.value = 0.3;
+      const oG = ctx.createGain(); oG.gain.value = 0.25;
+      trem.connect(tremG); tremG.connect(oG.gain);
+      o.connect(oG); oG.connect(gainNode);
+      o.start(); trem.start(); nodes.push(o, trem);
+    });
+    return nodes;
+  }
+
+  if (id === 'library') {
+    // Very quiet pink noise + occasional page turns
+    const buf = ctx.createBuffer(1, sr * 4, sr);
+    const d = buf.getChannelData(0);
+    let b0=0,b1=0,b2=0;
+    for (let i = 0; i < d.length; i++) {
+      const w = Math.random() * 2 - 1;
+      b0=.99886*b0+w*.015; b1=.99332*b1+w*.02; b2=.969*b2+w*.04;
+      d[i] = (b0+b1+b2)*0.08;
+    }
+    const src = ctx.createBufferSource(); src.buffer = buf; src.loop = true;
+    const lpf = ctx.createBiquadFilter(); lpf.type = 'lowpass'; lpf.frequency.value = 2000;
+    src.connect(lpf); lpf.connect(gainNode); src.start();
+    const page = () => {
+      const nBuf = ctx.createBuffer(1, sr * 0.15, sr);
+      const nd = nBuf.getChannelData(0);
+      for (let i = 0; i < nd.length; i++) nd[i] = (Math.random() * 2 - 1) * Math.exp(-i / (sr * 0.03));
+      const ns = ctx.createBufferSource(); ns.buffer = nBuf;
+      const g = ctx.createGain(); g.gain.value = 0.07;
+      ns.connect(g); g.connect(gainNode); ns.start();
+      setTimeout(page, 8000 + Math.random() * 15000);
+    };
+    page(); return [src];
+  }
+
+  if (id === 'city') {
+    // Low rumble + distant honks
+    const buf = ctx.createBuffer(1, sr * 4, sr);
+    const d = buf.getChannelData(0);
+    let last = 0;
+    for (let i = 0; i < d.length; i++) {
+      const w = Math.random() * 2 - 1;
+      last = (last + 0.01 * w) / 1.01; d[i] = last * 4;
+    }
+    const src = ctx.createBufferSource(); src.buffer = buf; src.loop = true;
+    const lpf = ctx.createBiquadFilter(); lpf.type = 'lowpass'; lpf.frequency.value = 400;
+    src.connect(lpf); lpf.connect(gainNode); src.start();
+    const honk = () => {
+      const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = 300 + Math.random() * 200;
+      const g = ctx.createGain(); g.gain.setValueAtTime(0, ctx.currentTime);
+      g.gain.linearRampToValueAtTime(0.05, ctx.currentTime + 0.05);
+      g.gain.setValueAtTime(0.05, ctx.currentTime + 0.3 + Math.random() * 0.5);
+      g.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.5 + Math.random() * 0.5);
+      const lpfH = ctx.createBiquadFilter(); lpfH.type = 'lowpass'; lpfH.frequency.value = 1000;
+      o.connect(lpfH); lpfH.connect(g); g.connect(gainNode);
+      o.start(); o.stop(ctx.currentTime + 1.2);
+      setTimeout(honk, 6000 + Math.random() * 12000);
+    };
+    honk(); return [src];
+  }
+
+  if (id === 'river') {
+    // High-pass brown noise for rushing water
+    const buf = ctx.createBuffer(2, sr * 4, sr);
+    for (let c = 0; c < 2; c++) {
+      const d = buf.getChannelData(c);
+      let last = 0;
+      for (let i = 0; i < d.length; i++) {
+        const w = Math.random() * 2 - 1;
+        last = (last + 0.03 * w) / 1.03; d[i] = last * 3;
+      }
+    }
+    const src = ctx.createBufferSource(); src.buffer = buf; src.loop = true;
+    const hpf = ctx.createBiquadFilter(); hpf.type = 'highpass'; hpf.frequency.value = 600;
+    const lpf = ctx.createBiquadFilter(); lpf.type = 'lowpass'; lpf.frequency.value = 3000;
+    const lfo = ctx.createOscillator(); lfo.frequency.value = 0.18;
+    const lfoG = ctx.createGain(); lfoG.gain.value = 0.25;
+    const rG = ctx.createGain(); rG.gain.value = 0.75;
+    lfo.connect(lfoG); lfoG.connect(rG.gain);
+    src.connect(hpf); hpf.connect(lpf); lpf.connect(rG); rG.connect(gainNode);
+    src.start(); lfo.start(); return [src, lfo];
+  }
+
+  if (id === 'drone') {
+    // Meditation drone: fundamental + harmonics with slow beats
+    const nodes = [];
+    const base = 110;
+    [[1,0.5],[1.5,0.2],[2,0.15],[3,0.08],[4,0.04]].forEach(([ratio, amp], i) => {
+      const o = ctx.createOscillator(); o.type = 'sine';
+      o.frequency.value = base * ratio;
+      const beatLfo = ctx.createOscillator(); beatLfo.frequency.value = 0.04 + i * 0.01;
+      const beatG = ctx.createGain(); beatG.gain.value = amp * 0.4;
+      const oG = ctx.createGain(); oG.gain.value = amp;
+      beatLfo.connect(beatG); beatG.connect(oG.gain);
+      o.connect(oG); oG.connect(gainNode);
+      o.start(); beatLfo.start(); nodes.push(o, beatLfo);
+    });
+    return nodes;
+  }
+
+  // fallback white noise
+  const buf = ctx.createBuffer(1, sr * 2, sr);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  const src = ctx.createBufferSource(); src.buffer = buf; src.loop = true;
+  src.connect(gainNode); src.start(); return [src];
+}
+
+function toggleSound(id) {
+  if (actives[id]) {
+    stopSound(id);
+  } else {
+    startSound(id);
+  }
+  updateNowPlaying();
+}
+
+function startSound(id) {
+  const ctx = getCtx();
+  const gainNode = ctx.createGain(); gainNode.gain.value = masterVol;
+  gainNode.connect(ctx.destination);
+  const nodes = buildSound(id, ctx, gainNode);
+  actives[id] = { ctx, gainNode, nodes };
+  document.getElementById('btn-'+id).classList.add('active');
+  // Update per-sound volume slider
+  const slider = document.getElementById('vol-'+id);
+  if (slider) slider.value = masterVol;
+}
+
+function stopSound(id) {
+  if (!actives[id]) return;
+  try {
+    actives[id].nodes.forEach(n => { try { n.stop && n.stop(); } catch {} });
+    actives[id].ctx.close();
+  } catch {}
+  delete actives[id];
+  document.getElementById('btn-'+id)?.classList.remove('active');
+}
+
+function stopAll() {
+  SOUNDS.forEach(s => stopSound(s.id));
+  updateNowPlaying();
+}
+
+function setMasterVol(v) {
+  masterVol = v;
+  document.getElementById('vol-pct').textContent = Math.round(v * 100) + '%';
+  Object.values(actives).forEach(a => { try { a.gainNode.gain.value = v; } catch {} });
+}
+
+function setSoundVol(id, v) {
+  if (actives[id]) {
+    try { actives[id].gainNode.gain.value = parseFloat(v); } catch {}
+  }
+}
+
+function applyPreset(ids) {
+  stopAll();
+  ids.forEach(id => startSound(id));
+  updateNowPlaying();
+}
+
+function updateNowPlaying() {
+  const playing = SOUNDS.filter(s => actives[s.id]).map(s => s.name);
+  const label = document.getElementById('np-label');
+  const eq = document.getElementById('np-eq');
+  if (playing.length) {
+    label.textContent = 'Playing: ' + playing.join(' + ');
+    eq.style.display = 'flex';
+  } else {
+    label.textContent = 'Nothing playing — pick a sound below';
+    eq.style.display = 'none';
+  }
+}
+
+/* ── Timer ── */
+let timerMin = 25, timerSec = 0, timerRunning = false, timerInterval = null;
+
+function setTimer(min, btn) {
+  resetTimer();
+  timerMin = min; timerSec = 0;
+  document.querySelectorAll('.tpre').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  updateTimerDisplay();
+}
+
+function toggleTimer() {
+  if (timerRunning) {
+    clearInterval(timerInterval); timerRunning = false;
+    document.getElementById('t-icon').innerHTML = `<polygon points="5 3 19 12 5 21 5 3"/>`;
+    document.getElementById('t-label').textContent = 'Resume';
+    document.getElementById('t-status').textContent = 'Paused';
+  } else {
+    timerRunning = true;
+    document.getElementById('t-icon').innerHTML = `<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>`;
+    document.getElementById('t-label').textContent = 'Pause';
+    document.getElementById('t-status').textContent = 'Focusing...';
+    timerInterval = setInterval(() => {
+      if (timerSec > 0) { timerSec--; }
+      else if (timerMin > 0) { timerMin--; timerSec = 59; }
+      else {
+        clearInterval(timerInterval); timerRunning = false;
+        document.getElementById('t-status').textContent = 'Session complete!';
+        document.getElementById('t-icon').innerHTML = `<polygon points="5 3 19 12 5 21 5 3"/>`;
+        document.getElementById('t-label').textContent = 'Start';
+        Toast.show('Focus session complete!', 'success');
+        Notifs.add('Focus session complete!', 'success');
+        return;
+      }
+      updateTimerDisplay();
+    }, 1000);
+  }
+}
+
+function resetTimer() {
+  clearInterval(timerInterval); timerRunning = false;
+  timerSec = 0;
+  document.getElementById('t-icon').innerHTML = `<polygon points="5 3 19 12 5 21 5 3"/>`;
+  document.getElementById('t-label').textContent = 'Start';
+  document.getElementById('t-status').textContent = 'Ready';
+  updateTimerDisplay();
+}
+
+function updateTimerDisplay() {
+  document.getElementById('t-display').textContent =
+    String(timerMin).padStart(2,'0') + ':' + String(timerSec).padStart(2,'0');
+}
+
+/* ── Render sounds ── */
+function renderSounds() {
+  document.getElementById('sounds-grid').innerHTML = SOUNDS.map(s => `
+    <div class="sound-btn" id="btn-${s.id}"
+      style="--s-bg:${s.bg};--s-border:${s.br};--s-ic:${s.ic}"
+      onclick="toggleSound('${s.id}')">
+      <div class="sound-icon-wrap">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">${ICONS[s.id]||''}</svg>
+      </div>
+      <div class="sound-name">${s.name}</div>
+      <div class="sound-desc">${s.desc}</div>
+      <div class="eq-bars">
+        <div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div>
+        <div class="eq-bar"></div><div class="eq-bar"></div>
+      </div>
+      <div class="sound-vol">
+        <input type="range" min="0" max="1" step=".01" value=".6" id="vol-${s.id}"
+          oninput="setSoundVol('${s.id}',this.value);event.stopPropagation()"
+          onclick="event.stopPropagation()" style="width:100%;margin-top:.35rem"/>
+      </div>
+    </div>`).join('');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  buildNav('music');
+  buildFooter();
+  renderSounds();
+  updateTimerDisplay();
+});
+</script>
+</body>
+</html>

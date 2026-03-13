@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Daily Journal — SavahLifestyle</title>
+<link rel="stylesheet" href="css/style.css"/>
+<style>.journal-entry-preview{cursor:pointer;padding:0.9rem 1rem;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:0.5rem;transition:var(--transition)}.journal-entry-preview:hover,.journal-entry-preview.active{border-color:var(--border-accent)}.entry-date{font-family:var(--font-head);font-size:0.88rem;font-weight:700;color:var(--text)}.entry-preview{font-size:0.78rem;color:var(--text-muted);margin-top:0.2rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.journal-write{width:100%;min-height:300px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:1.25rem;font-family:var(--font-body);font-size:1rem;color:var(--text);resize:vertical;line-height:1.8}.journal-write:focus{border-color:var(--border-accent);outline:none}</style>
+<script src="js/app.js" defer></script>
+<script src="js/localAuth.js" defer></script>
+<script src="js/nav.js" defer></script>
+</head>
+<body>
+<div class="page"><div class="container">
+  <div class="page-header"><div><h1 class="page-title">Daily <span>Journal</span></h1><p class="page-subtitle">Reflect, record, and grow every day</p></div>
+  <button class="btn btn-primary" onclick="newEntry()">+ New Entry</button></div>
+  <div class="grid-2" style="align-items:start">
+    <div>
+      <div class="section-title">Past Entries</div>
+      <div id="entries-list"></div>
+    </div>
+    <div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem">
+        <div style="font-family:var(--font-head);font-weight:700;font-size:0.95rem" id="entry-date-label">Today's Entry</div>
+        <div style="display:flex;gap:0.5rem">
+          <span id="save-indicator" style="font-size:0.75rem;color:var(--text-muted)">Auto-saved</span>
+          <button class="btn btn-secondary" style="padding:0.3rem 0.75rem;font-size:0.8rem" onclick="saveEntry()">Save</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem;flex-wrap:wrap">
+        <input type="text" id="entry-mood" placeholder="<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><circle cx="12" cy="12" r="10"/><path d="M8 13s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg> Mood today..." style="flex:1;min-width:140px;padding:0.5rem 0.75rem;font-size:0.85rem"/>
+        <input type="text" id="entry-highlight" placeholder="🌟 Today's highlight..." style="flex:2;min-width:200px;padding:0.5rem 0.75rem;font-size:0.85rem"/>
+      </div>
+      <textarea class="journal-write" id="entry-text" placeholder="What's on your mind today?&#10;&#10;<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>️ Write freely — this is your private space.&#10;<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> Reflect on what happened, how you felt, what you learned...&#10;<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> Set intentions for tomorrow..."></textarea>
+      <div style="display:flex;justify-content:space-between;margin-top:0.5rem;font-size:0.78rem;color:var(--text-muted)">
+        <span id="j-word-count">0 words</span>
+        <span id="j-date">Loading date...</span>
+      </div>
+    </div>
+  </div>
+</div></div>
+<script>
+let entries = JSON.parse(localStorage.getItem('savah:journal')||'{}');
+let currentDate = new Date().toISOString().split('T')[0];
+let saveTimer;
+
+document.getElementById('j-date').textContent = new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+function newEntry() {
+  currentDate = new Date().toISOString().split('T')[0];
+  loadEntry(currentDate);
+}
+
+function loadEntry(date) {
+  currentDate = date;
+  const entry = entries[date] || {};
+  document.getElementById('entry-text').value = entry.text || '';
+  document.getElementById('entry-mood').value = entry.mood || '';
+  document.getElementById('entry-highlight').value = entry.highlight || '';
+  document.getElementById('entry-date-label').textContent = date === new Date().toISOString().split('T')[0] ? "Today's Entry" : date;
+  updateWordCount();
+  document.querySelectorAll('.journal-entry-preview').forEach(el => el.classList.toggle('active', el.dataset.date === date));
+}
+
+function saveEntry() {
+  const text = document.getElementById('entry-text').value;
+  if(!text.trim()) return;
+  entries[currentDate] = {
+    text, mood: document.getElementById('entry-mood').value,
+    highlight: document.getElementById('entry-highlight').value,
+    saved: new Date().toISOString()
+  };
+  localStorage.setItem('savah:journal', JSON.stringify(entries));
+  document.getElementById('save-indicator').textContent = 'Saved ' + new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+  renderEntries();
+}
+
+document.getElementById('entry-text').addEventListener('input', () => {
+  updateWordCount();
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveEntry, 1200);
+});
+
+function updateWordCount() {
+  const text = document.getElementById('entry-text').value;
+  const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+  document.getElementById('j-word-count').textContent = words + ' words';
+}
+
+function renderEntries() {
+  const sorted = Object.entries(entries).sort((a,b) => b[0].localeCompare(a[0]));
+  if(!sorted.length) {
+    document.getElementById('entries-list').innerHTML = '<div style="color:var(--text-muted);font-size:0.85rem;padding:1rem">No entries yet — start writing!</div>';
+    return;
+  }
+  document.getElementById('entries-list').innerHTML = sorted.map(([date, e]) => `
+    <div class="journal-entry-preview ${date===currentDate?'active':''}" data-date="${date}" onclick="loadEntry('${date}')">
+      <div class="entry-date">${new Date(date+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'})} ${e.mood||''}</div>
+      <div class="entry-preview">${e.text.slice(0,100)}</div>
+    </div>
+  `).join('');
+}
+
+loadEntry(currentDate);
+renderEntries();
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  buildNav('journal');
+  buildFooter();
+});
+</script>
+</body></html>

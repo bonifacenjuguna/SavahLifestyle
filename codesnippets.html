@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Code Snippets — SavahLifestyle</title>
+  <link rel="stylesheet" href="css/style.css"/>
+  <script src="js/app.js" defer></script>
+  <script src="js/localAuth.js" defer></script>
+<script src="js/nav.js" defer></script>
+  <style>
+    .snippet-card{background:var(--card);border:1px solid var(--glass-border);border-radius:var(--radius);overflow:hidden;transition:var(--transition);}
+    .snippet-card:hover{border-color:var(--blue);}
+    .snippet-header{padding:.9rem 1.1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:.5rem;}
+    .snippet-lang{font-size:.68rem;padding:2px 8px;border-radius:20px;font-weight:700;background:var(--blue-dim);color:var(--blue);}
+    .snippet-code{background:var(--bg3);padding:1rem 1.1rem;font-family:var(--font-mono);font-size:.78rem;line-height:1.6;overflow-x:auto;max-height:180px;white-space:pre;}
+    .snippet-footer{padding:.65rem 1.1rem;display:flex;align-items:center;justify-content:space-between;font-size:.75rem;color:var(--text-muted);}
+  </style>
+</head>
+<body>
+<div id="page-loader"><div class="loader-logo"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>Savah<span>Lifestyle</span></div><div class="loader-bar-wrap"><div class="loader-bar"></div></div></div>
+<div class="page"><div class="container" style="padding-top:2rem;padding-bottom:3rem">
+  <div class="page-header">
+    <div><h1 class="page-title">Code <span>Snippets</span></h1><p class="page-subtitle">Save and organise your reusable code snippets</p></div>
+    <a href="index.html" class="nav-back"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>Back</a>
+  </div>
+  <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:1.5rem;align-items:center">
+    <input type="text" class="form-input" id="snip-search" placeholder="Search snippets…" style="max-width:240px" oninput="renderSnips()"/>
+    <select class="form-input" id="snip-lang-filter" style="max-width:150px" onchange="renderSnips()">
+      <option value="all">All Languages</option>
+      <option>JavaScript</option><option>Python</option><option>HTML</option><option>CSS</option>
+      <option>Bash</option><option>SQL</option><option>PHP</option><option>Other</option>
+    </select>
+    <button class="btn btn-primary" onclick="openSnipModal()">+ Add Snippet</button>
+    <span style="margin-left:auto;font-size:.82rem;color:var(--text-muted)" id="snip-count"></span>
+  </div>
+  <div id="snips-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1rem"></div>
+</div></div>
+
+<div class="modal-overlay" id="snip-modal">
+  <div class="modal" style="max-width:600px">
+    <div class="modal-header"><div class="modal-title" id="snip-modal-title">Add Snippet</div>
+      <button class="btn-icon btn" onclick="closeSnipModal()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="form-group"><label class="form-label">Title</label><input type="text" class="form-input" id="snip-title" placeholder="e.g. Debounce function"/></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
+      <div class="form-group"><label class="form-label">Language</label>
+        <select class="form-input" id="snip-lang">
+          <option>JavaScript</option><option>Python</option><option>HTML</option><option>CSS</option>
+          <option>Bash</option><option>SQL</option><option>PHP</option><option>Other</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Tags (comma-separated)</label>
+        <input type="text" class="form-input" id="snip-tags" placeholder="utils, async, dom"/>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Description</label><input type="text" class="form-input" id="snip-desc" placeholder="Brief description…"/></div>
+    <div class="form-group"><label class="form-label">Code</label>
+      <textarea class="form-input" id="snip-code" rows="8" placeholder="Paste your code here…" style="resize:vertical;font-family:var(--font-mono);font-size:.82rem"></textarea>
+    </div>
+    <div style="display:flex;gap:.75rem;margin-top:1rem">
+      <button class="btn btn-secondary" style="flex:1" onclick="closeSnipModal()">Cancel</button>
+      <button class="btn btn-primary" style="flex:1" onclick="saveSnip()">Save Snippet</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let snips = JSON.parse(localStorage.getItem('savah:snippets')||'[]');
+let editSnipId = null;
+
+function openSnipModal(id=null){
+  editSnipId=id;
+  document.getElementById('snip-modal-title').textContent=id?'Edit Snippet':'Add Snippet';
+  if(id){const s=snips.find(x=>x.id===id);if(s){document.getElementById('snip-title').value=s.title;document.getElementById('snip-lang').value=s.lang;document.getElementById('snip-tags').value=(s.tags||[]).join(', ');document.getElementById('snip-desc').value=s.desc||'';document.getElementById('snip-code').value=s.code;}}
+  else{['snip-title','snip-tags','snip-desc','snip-code'].forEach(id=>document.getElementById(id).value='');}
+  openModal('snip-modal');
+}
+function closeSnipModal(){closeModal('snip-modal');}
+
+function saveSnip(){
+  const title=document.getElementById('snip-title').value.trim(), code=document.getElementById('snip-code').value.trim();
+  if(!title||!code){Toast.show('Title and code required','warning');return;}
+  const s={id:editSnipId||Date.now(),title,lang:document.getElementById('snip-lang').value,tags:document.getElementById('snip-tags').value.split(',').map(t=>t.trim()).filter(Boolean),desc:document.getElementById('snip-desc').value.trim(),code,created:editSnipId?snips.find(x=>x.id===editSnipId)?.created||Date.now():Date.now(),updated:Date.now()};
+  if(editSnipId){snips=snips.map(x=>x.id===editSnipId?s:x);}else{snips.unshift(s);}
+  save();renderSnips();closeSnipModal();Toast.show('Snippet saved','success');
+}
+
+function copySnip(id){
+  const s=snips.find(x=>x.id===id);if(!s)return;
+  navigator.clipboard.writeText(s.code).then(()=>Toast.show('Copied to clipboard','success'));
+}
+function deleteSnip(id){if(!confirm('Delete snippet?'))return;snips=snips.filter(x=>x.id!==id);save();renderSnips();}
+function save(){localStorage.setItem('savah:snippets',JSON.stringify(snips));}
+
+function renderSnips(){
+  const q=document.getElementById('snip-search').value.toLowerCase();
+  const lf=document.getElementById('snip-lang-filter').value;
+  let f=snips.filter(s=>{
+    if(lf!=='all'&&s.lang!==lf)return false;
+    if(q&&!(s.title+s.code+s.desc+(s.tags||[]).join('')).toLowerCase().includes(q))return false;
+    return true;
+  });
+  document.getElementById('snip-count').textContent=f.length+' snippet'+(f.length!==1?'s':'');
+  document.getElementById('snips-grid').innerHTML=f.length?f.map(s=>`
+    <div class="snippet-card">
+      <div class="snippet-header">
+        <div>
+          <div style="font-weight:700;font-size:.88rem;margin-bottom:.2rem">${s.title}</div>
+          ${s.desc?`<div style="font-size:.75rem;color:var(--text-muted)">${s.desc}</div>`:''}
+        </div>
+        <div style="display:flex;gap:.3rem;align-items:center;flex-shrink:0">
+          <span class="snippet-lang">${s.lang}</span>
+        </div>
+      </div>
+      <div class="snippet-code">${escapeHtml(s.code)}</div>
+      <div class="snippet-footer">
+        <div style="display:flex;gap:.3rem;flex-wrap:wrap">${(s.tags||[]).map(t=>`<span style="background:var(--bg3);padding:1px 6px;border-radius:4px;font-size:.68rem">#${t}</span>`).join('')}</div>
+        <div style="display:flex;gap:.3rem">
+          <button class="btn btn-secondary btn-sm" onclick="copySnip(${s.id})" style="font-size:.72rem">Copy</button>
+          <button class="btn btn-secondary btn-sm" onclick="openSnipModal(${s.id})" style="font-size:.72rem">Edit</button>
+          <button class="btn btn-secondary btn-sm" onclick="deleteSnip(${s.id})" style="font-size:.72rem;color:var(--danger)">Del</button>
+        </div>
+      </div>
+    </div>`).join(''):`<div class="empty-state" style="grid-column:1/-1"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><h3>No snippets yet</h3><p>Save your first code snippet above.</p></div>`;
+}
+function escapeHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+renderSnips();
+document.addEventListener('DOMContentLoaded',()=>{buildNav();buildFooter();});
+</script>
+</body>
+</html>

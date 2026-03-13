@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sleep Tracker — SavahLifestyle</title>
+  <link rel="stylesheet" href="css/style.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <script src="js/app.js" defer></script>
+  <script src="js/localAuth.js" defer></script>
+<script src="js/nav.js" defer></script>
+  <style>
+    .sq-btn { padding:.4rem .9rem; border-radius:20px; font-size:.8rem; font-weight:600; border:1px solid var(--border); background:transparent; color:var(--text-muted); cursor:pointer; transition:var(--transition); }
+    .sq-btn.active { border-color:var(--blue); color:var(--blue); background:var(--blue-dim); }
+    .sleep-entry { display:flex; align-items:center; gap:.75rem; padding:.85rem 1rem; background:var(--card); border:1px solid var(--border); border-radius:var(--radius-sm); margin-bottom:.5rem; }
+    .sleep-entry:hover { border-color:var(--border-accent); }
+    .sleep-hrs { font-family:var(--font-head); font-size:1.4rem; font-weight:800; color:var(--blue); }
+    .qual-badge { font-size:.72rem; padding:2px 8px; border-radius:20px; font-weight:600; }
+    .qgreat{background:rgba(34,197,94,.15);color:var(--success);}
+    .qgood{background:rgba(59,130,246,.15);color:var(--blue);}
+    .qok{background:rgba(245,158,11,.15);color:var(--warning);}
+    .qpoor{background:rgba(239,68,68,.15);color:var(--danger);}
+  </style>
+</head>
+<body>
+<div id="page-loader"><div class="loader-logo"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>Savah<span>Lifestyle</span></div><div class="loader-bar-wrap"><div class="loader-bar"></div></div></div>
+<div class="page"><div class="container" style="padding-top:2rem;padding-bottom:3rem">
+  <div class="page-header">
+    <div><h1 class="page-title">Sleep <span>Tracker</span></h1><p class="page-subtitle">Log and analyse your sleep patterns</p></div>
+    <a href="index.html" class="nav-back"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>Back</a>
+  </div>
+  <div class="grid-4" style="margin-bottom:2rem" id="sleep-stats"></div>
+  <div class="grid-2" style="margin-bottom:2rem">
+    <div class="card card-p">
+      <div class="card-title" style="margin-bottom:1rem"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg> Log Sleep</div>
+      <div class="form-group"><label class="form-label">Date</label><input type="date" class="form-input" id="sl-date"/></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
+        <div class="form-group"><label class="form-label">Bedtime</label><input type="time" class="form-input" id="sl-start" value="22:30"/></div>
+        <div class="form-group"><label class="form-label">Wake Time</label><input type="time" class="form-input" id="sl-end" value="06:30"/></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Quality</label>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.35rem">
+          <button class="sq-btn active" data-q="great"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><circle cx="12" cy="12" r="10"/><path d="M9 10h6"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg> Great</button>
+          <button class="sq-btn" data-q="good"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><circle cx="12" cy="12" r="10"/><path d="M8 13s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg> Good</button>
+          <button class="sq-btn" data-q="ok"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><circle cx="12" cy="12" r="10"/><line x1="8" y1="15" x2="16" y2="15"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg> OK</button>
+          <button class="sq-btn" data-q="poor"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg> Poor</button>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">Notes</label><input type="text" class="form-input" id="sl-notes" placeholder="Optional notes…"/></div>
+      <button class="btn btn-primary" style="width:100%" onclick="logSleep()">Log Sleep</button>
+    </div>
+    <div class="card card-p">
+      <div class="card-title" style="margin-bottom:1rem"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> Last 7 Days</div>
+      <div style="height:230px"><canvas id="sleep-chart"></canvas></div>
+    </div>
+  </div>
+  <div class="card card-p">
+    <div class="card-title" style="margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between">
+      Sleep History
+      <button class="btn btn-secondary btn-sm" onclick="if(confirm('Clear all?')){sleepData=[];save();render();}" style="color:var(--danger)">Clear All</button>
+    </div>
+    <div id="sleep-list"></div>
+  </div>
+  <div class="card card-p" style="margin-top:1.5rem">
+    <div class="card-title" style="margin-bottom:1rem"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><line x1="12" y1="2" x2="12" y2="6"/><circle cx="12" cy="12" r="4"/></svg> Sleep Tips</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem">
+      ${['<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg> Keep a consistent sleep schedule — even on weekends','📵 Avoid screens 1 hour before bed','🌡️ Keep your bedroom cool (16–19°C / 60–67°F)','<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg> Cut caffeine after 2 PM','<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><circle cx="12" cy="5" r="1"/><path d="M12 6v6l-3 3"/><path d="M9 9h6"/><path d="M15 15l-3-3"/><path d="M3 18h18"/></svg> Try meditation or light stretching before bed','<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg> Stay hydrated but avoid fluids 2h before bed'].map(t=>`<div style="background:var(--bg2);border-radius:var(--radius-sm);padding:.85rem;font-size:.84rem;color:var(--text-muted)">${t}</div>`).join('')}
+    </div>
+  </div>
+</div></div>
+<script>
+let sleepData = JSON.parse(localStorage.getItem('savah:sleep') || '[]');
+let selQ = 'great';
+document.getElementById('sl-date').value = new Date().toISOString().split('T')[0];
+document.querySelectorAll('.sq-btn').forEach(b => b.addEventListener('click', () => { document.querySelectorAll('.sq-btn').forEach(x=>x.classList.remove('active')); b.classList.add('active'); selQ=b.dataset.q; }));
+function calcH(s,e){const[sh,sm]=s.split(':').map(Number),[eh,em]=e.split(':').map(Number);let m=(eh*60+em)-(sh*60+sm);if(m<0)m+=1440;return Math.round(m/60*10)/10;}
+function logSleep(){const date=document.getElementById('sl-date').value,s=document.getElementById('sl-start').value,e=document.getElementById('sl-end').value,n=document.getElementById('sl-notes').value.trim();if(!date||!s||!e){Toast.show('Fill required fields','warning');return;}const h=calcH(s,e);sleepData.unshift({id:Date.now(),date,start:s,end:e,hours:h,quality:selQ,notes:n});save();render();Toast.show(`Logged ${h}h sleep`,'success');document.getElementById('sl-notes').value='';}
+function save(){localStorage.setItem('savah:sleep',JSON.stringify(sleepData));}
+function render(){
+  const avg=sleepData.length?Math.round(sleepData.reduce((s,e)=>s+e.hours,0)/sleepData.length*10)/10:0;
+  const good=sleepData.filter(s=>s.quality==='great'||s.quality==='good').length;
+  document.getElementById('sleep-stats').innerHTML=[
+    {l:'Entries',v:sleepData.length,c:'var(--blue)'},{l:'Avg Sleep',v:avg+'h',c:'var(--purple)'},
+    {l:'Good Nights',v:sleepData.length?Math.round(good/sleepData.length*100)+'%':'—',c:'var(--success)'},
+    {l:'Best Night',v:sleepData.length?Math.max(...sleepData.map(s=>s.hours))+'h':'—',c:'var(--warning)'},
+  ].map(s=>`<div class="stat-card"><div><div class="stat-value" style="color:${s.c};font-size:1.4rem">${s.v}</div><div class="stat-label">${s.l}</div></div></div>`).join('');
+  const last7=Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-(6-i));return d.toISOString().split('T')[0];});
+  const cd=last7.map(d=>{const e=sleepData.find(s=>s.date===d);return e?e.hours:0;});
+  const lb=last7.map(d=>new Date(d+'T00:00').toLocaleDateString('en',{weekday:'short'}));
+  if(window._slC)window._slC.destroy();
+  window._slC=new Chart(document.getElementById('sleep-chart'),{type:'bar',data:{labels:lb,datasets:[{label:'Hours',data:cd,backgroundColor:cd.map(h=>h>=7?'rgba(34,197,94,0.65)':h>=6?'rgba(59,130,246,0.65)':h>=5?'rgba(245,158,11,0.65)':'rgba(239,68,68,0.65)'),borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#64748b'},grid:{display:false}},y:{min:0,max:12,ticks:{color:'#64748b',callback:v=>v+'h'},grid:{color:'rgba(255,255,255,0.04)'}}}}});
+  if(!sleepData.length){document.getElementById('sleep-list').innerHTML=`<div class="empty-state"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg><h3>No sleep logged</h3><p>Start tracking above.</p></div>`;return;}
+  const qmap={great:'qgreat',good:'qgood',ok:'qok',poor:'qpoor'};
+  document.getElementById('sleep-list').innerHTML=sleepData.map(e=>`
+    <div class="sleep-entry">
+      <div style="font-size:1.4rem"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></div>
+      <div style="flex:1"><div style="font-weight:600;font-size:.9rem">${e.date}</div><div class="muted">${e.start} → ${e.end}${e.notes?' · '+e.notes:''}</div></div>
+      <div class="sleep-hrs">${e.hours}h</div>
+      <span class="qual-badge ${qmap[e.quality]||'qok'}">${e.quality}</span>
+      <button class="btn-icon btn" onclick="sleepData=sleepData.filter(s=>s.id!==${e.id});save();render()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg></button>
+    </div>`).join('');
+}
+render();
+document.addEventListener('DOMContentLoaded',()=>{buildNav();buildFooter();});
+</script>
+</body>
+</html>

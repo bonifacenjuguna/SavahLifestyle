@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Whiteboard — SavahLifestyle v6</title>
+<link rel="stylesheet" href="css/style.css"/>
+<script src="js/app.js" defer></script>
+<script src="js/localAuth.js" defer></script>
+<script src="js/nav.js" defer></script>
+<style>
+#wb-canvas { display:block; cursor:crosshair; touch-action:none; border-radius:var(--radius); border:1px solid var(--glass-border); }
+.wb-toolbar { display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center; margin-bottom:0.75rem; padding:0.75rem; background:var(--card); border:1px solid var(--glass-border); border-radius:var(--radius); }
+.tool-btn { width:36px; height:36px; border-radius:var(--radius-sm); background:var(--bg2); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; cursor:pointer; transition:var(--transition); color:var(--text-muted); }
+.tool-btn:hover,.tool-btn.active { background:var(--blue-dim); border-color:var(--blue); color:var(--blue); }
+.color-swatch { width:28px; height:28px; border-radius:50%; border:2px solid transparent; cursor:pointer; transition:transform 0.15s; }
+.color-swatch:hover,.color-swatch.active { transform:scale(1.25); border-color:var(--text); }
+.wb-sep { width:1px; height:30px; background:var(--border); margin:0 0.25rem; }
+</style>
+</head>
+<body>
+<div id="page-loader"><div class="loader-logo"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>Savah<span>Lifestyle</span></div><div class="loader-bar-wrap"><div class="loader-bar"></div></div></div>
+
+<div class="page"><div class="container" style="padding-bottom:3rem">
+  <div class="page-header">
+    <div><h1 class="page-title">White<span>board</span></h1><p class="page-subtitle">Sketch, brainstorm, and draw freely</p></div>
+    <a href="index.html" class="nav-back"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg> Back</a>
+  </div>
+
+  <div class="wb-toolbar">
+    <!-- Tools -->
+    <button class="tool-btn active" id="tool-pen" onclick="setTool('pen',this)" title="Pen">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+    </button>
+    <button class="tool-btn" id="tool-eraser" onclick="setTool('eraser',this)" title="Eraser">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 20H7L3 16l10.25-10.25a1 1 0 0 1 1.5 0L20 11a1 1 0 0 1 0 1.5z"/></svg>
+    </button>
+    <button class="tool-btn" id="tool-line" onclick="setTool('line',this)" title="Line">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="19" x2="19" y2="5"/></svg>
+    </button>
+    <button class="tool-btn" id="tool-rect" onclick="setTool('rect',this)" title="Rectangle">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+    </button>
+    <button class="tool-btn" id="tool-circle" onclick="setTool('circle',this)" title="Circle">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>
+    </button>
+    <div class="wb-sep"></div>
+    <!-- Colors -->
+    <div id="color-swatches" style="display:flex;gap:0.35rem;flex-wrap:wrap"></div>
+    <div class="wb-sep"></div>
+    <!-- Stroke size -->
+    <input type="range" id="stroke-size" min="1" max="30" value="3" style="width:80px" title="Stroke size"/>
+    <div class="wb-sep"></div>
+    <button class="tool-btn" onclick="undo()" title="Undo">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
+    </button>
+    <button class="tool-btn" onclick="clearBoard()" title="Clear">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+    </button>
+    <button class="tool-btn" onclick="downloadBoard()" title="Download">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    </button>
+  </div>
+
+  <canvas id="wb-canvas"></canvas>
+</div></div>
+
+<script>
+const canvas = document.getElementById('wb-canvas');
+const ctx    = canvas.getContext('2d');
+let tool = 'pen', color = '#3b82f6', size = 3;
+let drawing = false, startX, startY, snapshot;
+const history = [];
+
+const COLORS = ['#ffffff','#f1f5f9','#94a3b8','#0f172a','#3b82f6','#ef4444','#10b981','#f97316','#8b5cf6','#ec4899','#f59e0b','#06b6d4'];
+
+function resize() {
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const snap = ctx.getImageData(0,0,canvas.width,canvas.height);
+  canvas.width  = rect.width - 2;
+  canvas.height = Math.max(500, window.innerHeight - 280);
+  ctx.putImageData(snap, 0, 0);
+  if (document.documentElement.getAttribute('data-theme') !== 'light') {
+    // dark bg already transparent on canvas
+  } else {
+    ctx.fillStyle = '#f8faff';
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+  }
+}
+
+function buildColors() {
+  const wrap = document.getElementById('color-swatches');
+  wrap.innerHTML = COLORS.map(c => `
+    <div class="color-swatch ${c===color?'active':''}" style="background:${c}" onclick="setColor('${c}',this)" title="${c}"></div>
+  `).join('');
+}
+
+function setColor(c, el) {
+  color = c;
+  document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function setTool(t, btn) {
+  tool = t;
+  document.querySelectorAll('.tool-btn[id^="tool-"]').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  canvas.style.cursor = t === 'eraser' ? 'cell' : 'crosshair';
+}
+
+document.getElementById('stroke-size').addEventListener('input', e => { size = +e.target.value; });
+
+function getPos(e) {
+  const rect = canvas.getBoundingClientRect();
+  const src = e.touches ? e.touches[0] : e;
+  return { x: src.clientX - rect.left, y: src.clientY - rect.top };
+}
+
+canvas.addEventListener('mousedown', startDraw);
+canvas.addEventListener('mousemove', draw);
+canvas.addEventListener('mouseup', endDraw);
+canvas.addEventListener('mouseleave', endDraw);
+canvas.addEventListener('touchstart', e => { e.preventDefault(); startDraw(e); }, {passive:false});
+canvas.addEventListener('touchmove',  e => { e.preventDefault(); draw(e); }, {passive:false});
+canvas.addEventListener('touchend',   endDraw);
+
+function startDraw(e) {
+  drawing = true;
+  const p = getPos(e);
+  startX = p.x; startY = p.y;
+  if (['line','rect','circle'].includes(tool)) {
+    snapshot = ctx.getImageData(0,0,canvas.width,canvas.height);
+  }
+  if (tool === 'pen' || tool === 'eraser') {
+    ctx.beginPath();
+    ctx.moveTo(startX, startY);
+  }
+}
+
+function draw(e) {
+  if (!drawing) return;
+  const p = getPos(e);
+  ctx.lineWidth = tool === 'eraser' ? size * 4 : size;
+  ctx.lineCap   = 'round';
+  ctx.lineJoin  = 'round';
+  if (tool === 'pen') {
+    ctx.strokeStyle = color;
+    ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+  } else if (tool === 'eraser') {
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+    ctx.globalCompositeOperation = 'source-over';
+  } else {
+    ctx.putImageData(snapshot, 0, 0);
+    ctx.strokeStyle = color;
+    ctx.beginPath();
+    if (tool === 'line') { ctx.moveTo(startX,startY); ctx.lineTo(p.x,p.y); }
+    else if (tool === 'rect') { ctx.strokeRect(startX,startY,p.x-startX,p.y-startY); }
+    else if (tool === 'circle') {
+      const rx = Math.abs(p.x-startX)/2, ry = Math.abs(p.y-startY)/2;
+      ctx.ellipse((startX+p.x)/2,(startY+p.y)/2,rx,ry,0,0,Math.PI*2);
+    }
+    ctx.stroke();
+  }
+}
+
+function endDraw() {
+  if (!drawing) return;
+  drawing = false;
+  history.push(ctx.getImageData(0,0,canvas.width,canvas.height));
+  if (history.length > 30) history.shift();
+  ctx.beginPath();
+}
+
+function undo() {
+  if (!history.length) return;
+  history.pop();
+  if (history.length) ctx.putImageData(history[history.length-1],0,0);
+  else clearBoard(true);
+}
+
+function clearBoard(silent) {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  if (document.documentElement.getAttribute('data-theme') === 'light') {
+    ctx.fillStyle = '#f8faff'; ctx.fillRect(0,0,canvas.width,canvas.height);
+  }
+  history.length = 0;
+  if (!silent) Toast.show('Board cleared', 'info', 1500);
+}
+
+function downloadBoard() {
+  const a = document.createElement('a');
+  a.href = canvas.toDataURL('image/png');
+  a.download = 'savah-whiteboard.png';
+  a.click();
+}
+
+window.addEventListener('resize', resize);
+resize();
+buildColors();
+// Light mode init bg
+if (document.documentElement.getAttribute('data-theme') === 'light') {
+  ctx.fillStyle = '#f8faff'; ctx.fillRect(0,0,canvas.width,canvas.height);
+}
+</script>
+</body></html>

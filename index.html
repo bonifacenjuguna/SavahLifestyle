@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="theme-color" content="#060810" media="(prefers-color-scheme: dark)"/>
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)"/>
+  <meta name="description" content="Your all-in-one digital productivity hub — weather, tasks, finance, focus, health and more."/>
+  <meta name="keywords" content="productivity, lifestyle, wellness, tasks, focus, journal, SavahLifestyle"/>
+  <meta name="author" content="SavahLifestyle"/>
+  <meta name="robots" content="index, follow"/>
+  <meta property="og:title" content="SavahLifestyle — Dashboard"/>
+  <meta property="og:description" content="Your all-in-one digital productivity hub — weather, tasks, finance, focus, health and more."/>
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="SavahLifestyle"/>
+  <meta name="twitter:card" content="summary"/>
+  <meta name="twitter:title" content="SavahLifestyle — Dashboard"/>
+  <meta name="twitter:description" content="Your all-in-one digital productivity hub — weather, tasks, finance, focus, health and more."/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+  <meta name="apple-mobile-web-app-title" content="SavahLifestyle"/>
+  <title>SavahLifestyle — Dashboard</title>
+  <meta name="description" content="Your all-in-one productivity hub — weather, tasks, finance, focus and more."/>
+  <link rel="stylesheet" href="css/style.css"/>
+  <script src="js/app.js" defer></script>
+  <script src="js/localAuth.js" defer></script>
+<script src="js/nav.js" defer></script>
+  <style>
+    /* Hero */
+    .hero {
+      padding:3.5rem 0 2.5rem;
+      position:relative; overflow:hidden;
+    }
+    .hero-inner { display:flex; align-items:center; justify-content:space-between; gap:2rem; flex-wrap:wrap; }
+    .hero-left { flex:1; min-width:280px; }
+    .hero-badge {
+      display:inline-flex; align-items:center; gap:0.4rem;
+      background:var(--blue-dim); border:1px solid var(--blue-border);
+      color:var(--blue); font-size:0.72rem; font-weight:700;
+      padding:0.3rem 0.85rem; border-radius:20px; margin-bottom:1.25rem;
+      text-transform:uppercase; letter-spacing:0.08em;
+    }
+    .hero-title { font-family:var(--font-head); font-size:clamp(1.9rem,4vw,3.2rem); font-weight:800; line-height:1.1; margin-bottom:0.75rem; }
+    .hero-sub { color:var(--text-muted); font-size:1rem; max-width:500px; margin-bottom:2rem; }
+    .hero-stats { display:flex; gap:2.5rem; flex-wrap:wrap; }
+    .hero-stat-val { font-family:var(--font-head); font-size:1.7rem; font-weight:800; line-height:1; }
+    .hero-stat-label { font-size:0.72rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; margin-top:0.2rem; }
+
+    /* Weather strip */
+    .weather-strip {
+      background:var(--card); border:1px solid var(--glass-border);
+      border-radius:var(--radius); padding:1.25rem 1.5rem;
+      display:flex; align-items:center; justify-content:space-between;
+      gap:1rem; flex-wrap:wrap; margin-bottom:2rem;
+      backdrop-filter:blur(10px);
+    }
+    .ws-left { display:flex; align-items:center; gap:1rem; }
+    .ws-icon { width:52px; height:52px; flex-shrink:0; }
+    .ws-temp { font-family:var(--font-head); font-size:2rem; font-weight:800; line-height:1; }
+    .ws-desc { color:var(--text-muted); font-size:0.85rem; }
+    .ws-details { display:flex; gap:1.5rem; flex-wrap:wrap; }
+    .ws-detail { font-size:0.8rem; color:var(--text-muted); display:flex; align-items:center; gap:0.35rem; }
+    .ws-detail svg { color:var(--blue); }
+
+    /* Category filter */
+    .cat-bar { display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:1.5rem; overflow-x:auto; padding-bottom:0.25rem; }
+    .cat-btn {
+      padding:0.4rem 1rem; border-radius:20px; font-size:0.8rem; font-weight:600;
+      border:1px solid var(--border); background:transparent; color:var(--text-muted);
+      cursor:pointer; transition:var(--transition); white-space:nowrap; flex-shrink:0;
+    }
+    .cat-btn:hover { border-color:var(--blue); color:var(--blue); }
+    .cat-btn.active { background:linear-gradient(135deg,var(--blue),var(--purple)); color:#fff; border-color:transparent; }
+
+    /* Module grid */
+    .modules-grid {
+      display:grid;
+      grid-template-columns:repeat(auto-fill, minmax(230px, 1fr));
+      gap:0.875rem;
+    }
+    @media(max-width:600px) { .modules-grid { grid-template-columns:repeat(2,1fr); } }
+    @media(max-width:360px)  { .modules-grid { grid-template-columns:1fr; } }
+
+    /* Quick stats row */
+    .quick-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:1rem; margin-bottom:2rem; }
+    .qs-card {
+      background:var(--card); border:1px solid var(--glass-border);
+      border-radius:var(--radius); padding:1.1rem 1.25rem;
+      backdrop-filter:blur(8px);
+    }
+    .qs-label { font-size:0.72rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:0.5rem; }
+    .qs-val { font-family:var(--font-head); font-size:1.5rem; font-weight:800; }
+
+    /* Section heading */
+    .dash-section { margin-bottom:2.5rem; }
+
+    @media(max-width:600px) {
+      .hero { padding:2rem 0 1.5rem; }
+      .ws-details { display:none; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="page-loader">
+  <div class="loader-logo">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+    Savah<span>Lifestyle</span>
+  </div>
+  <div class="loader-bar-wrap"><div class="loader-bar"></div></div>
+  <div class="loader-text">Loading your dashboard...</div>
+</div>
+
+<div class="page">
+  <section class="hero">
+    <div class="container">
+      <div class="hero-inner">
+        <div class="hero-left">
+          <div class="hero-badge">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            Productivity Command Centre
+          </div>
+          <h1 class="hero-title">
+            <span id="greeting">Good morning</span>,<br>
+            <span class="gradient-text" id="user-name-display">Welcome back</span>
+          </h1>
+          <p class="hero-sub">Everything you need — weather, tasks, finances, focus and more. All in one beautiful place.</p>
+          <div class="hero-stats">
+            <div class="hero-stat">
+              <div class="hero-stat-val" id="stat-tasks">—</div>
+              <div class="hero-stat-label">Tasks today</div>
+            </div>
+            <div class="hero-stat">
+              <div class="hero-stat-val" id="stat-streak">—</div>
+              <div class="hero-stat-label">Day streak</div>
+            </div>
+            <div class="hero-stat">
+              <div class="hero-stat-val" id="stat-focus">—</div>
+              <div class="hero-stat-label">Focus mins</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="container" style="padding-bottom:3rem">
+
+    <!-- Weather strip -->
+    <div class="weather-strip" id="weather-strip">
+      <div class="ws-left">
+        <svg class="ws-icon" id="ws-icon-svg" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="32" cy="32" r="14" fill="#f97316" opacity="0.9"/>
+          <g stroke="#f97316" stroke-width="2.5" stroke-linecap="round">
+            <line x1="32" y1="6" x2="32" y2="12"/>
+            <line x1="32" y1="52" x2="32" y2="58"/>
+            <line x1="6" y1="32" x2="12" y2="32"/>
+            <line x1="52" y1="32" x2="58" y2="32"/>
+            <line x1="13.9" y1="13.9" x2="18" y2="18"/>
+            <line x1="46" y1="46" x2="50.1" y2="50.1"/>
+            <line x1="50.1" y1="13.9" x2="46" y2="18"/>
+            <line x1="18" y1="46" x2="13.9" y2="50.1"/>
+          </g>
+        </svg>
+        <div>
+          <div class="ws-temp" id="ws-temp">--°C</div>
+          <div class="ws-desc" id="ws-desc">Loading weather...</div>
+        </div>
+      </div>
+      <div class="ws-details">
+        <div class="ws-detail">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+          <span id="ws-humidity">--%</span>
+        </div>
+        <div class="ws-detail">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/></svg>
+          <span id="ws-wind">-- km/h</span>
+        </div>
+        <div class="ws-detail">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <span id="ws-time">--:--</span>
+        </div>
+        <a href="weather.html" class="btn btn-secondary btn-sm">Full Forecast</a>
+      </div>
+    </div>
+
+    <!-- Quick stats -->
+    <div class="quick-stats" id="quick-stats">
+      <div class="qs-card">
+        <div class="qs-label">Pending Tasks</div>
+        <div class="qs-val gradient-text-blue" id="qs-pending">0</div>
+      </div>
+      <div class="qs-card">
+        <div class="qs-label">Habits Complete</div>
+        <div class="qs-val gradient-text-green" id="qs-habits">0%</div>
+      </div>
+      <div class="qs-card">
+        <div class="qs-label">Monthly Budget</div>
+        <div class="qs-val" id="qs-budget">$0</div>
+      </div>
+      <div class="qs-card">
+        <div class="qs-label">Journal Entries</div>
+        <div class="qs-val" id="qs-journal">0</div>
+      </div>
+    </div>
+
+    <!-- Category filter -->
+    <div class="cat-bar" id="cat-bar">
+      <button class="cat-btn active" onclick="filterModules('all',this)">All</button>
+      <button class="cat-btn" onclick="filterModules('productivity',this)">Productivity</button>
+      <button class="cat-btn" onclick="filterModules('health',this)">Health &amp; Life</button>
+      <button class="cat-btn" onclick="filterModules('finance',this)">Finance</button>
+      <button class="cat-btn" onclick="filterModules('creative',this)">Creative</button>
+      <button class="cat-btn" onclick="filterModules('tools',this)">Tools</button>
+    </div>
+
+    <!-- Modules grid -->
+    <div class="dash-section">
+      <div class="section-head">
+        <div class="section-title">
+          <div class="section-title-line"></div>
+          All Modules
+        </div>
+      </div>
+      <div class="modules-grid" id="modules-grid"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const MODULES = [
+    // Productivity
+    { name:'Todo & Tasks',     desc:'Manage your daily tasks',    href:'todo.html',           icon:'check',    cat:'productivity', c1:'rgba(59,130,246,0.12)',  ic:'#3b82f6', ib:'rgba(59,130,246,0.15)' },
+    { name:'Habits Tracker',   desc:'Build consistent habits',    href:'habits.html',         icon:'repeat',   cat:'productivity', c1:'rgba(16,185,129,0.12)', ic:'#10b981', ib:'rgba(16,185,129,0.15)' },
+    { name:'Goals Planner',    desc:'Set and track your goals',   href:'goals.html',          icon:'target',   cat:'productivity', c1:'rgba(139,92,246,0.12)', ic:'#8b5cf6', ib:'rgba(139,92,246,0.15)' },
+    { name:'Focus Mode',       desc:'Deep work sessions',         href:'focus.html',          icon:'timer',    cat:'productivity', c1:'rgba(6,182,212,0.12)',  ic:'#06b6d4', ib:'rgba(6,182,212,0.15)'  },
+    { name:'Calendar',         desc:'Schedule your life',         href:'calendar.html',       icon:'cal',      cat:'productivity', c1:'rgba(59,130,246,0.12)',  ic:'#3b82f6', ib:'rgba(59,130,246,0.15)' },
+    { name:'Analytics',        desc:'Your productivity stats',    href:'analytics.html',      icon:'bar',      cat:'productivity', c1:'rgba(249,115,22,0.12)', ic:'#f97316', ib:'rgba(249,115,22,0.15)' },
+    // Health
+    { name:'Daily Journal',    desc:'Write your thoughts',        href:'journal.html',        icon:'book',     cat:'health',       c1:'rgba(16,185,129,0.12)', ic:'#10b981', ib:'rgba(16,185,129,0.15)' },
+    { name:'Mood Tracker',     desc:'Track your emotional state', href:'moodtracker.html',    icon:'smile',    cat:'health',       c1:'rgba(236,72,153,0.12)', ic:'#ec4899', ib:'rgba(236,72,153,0.15)' },
+    { name:'Body Metrics',     desc:'BMI, water, health goals',   href:'bodymetrics.html',    icon:'heart',    cat:'health',       c1:'rgba(239,68,68,0.12)',  ic:'#ef4444', ib:'rgba(239,68,68,0.15)'  },
+    { name:'Water Tracker',    desc:'Stay hydrated daily',        href:'watertracker.html',   icon:'drop',     cat:'health',       c1:'rgba(6,182,212,0.12)',  ic:'#06b6d4', ib:'rgba(6,182,212,0.15)'  },
+    { name:'Sleep Tracker',    desc:'Monitor sleep quality',      href:'sleeptracker.html',   icon:'moon',     cat:'health',       c1:'rgba(139,92,246,0.12)', ic:'#8b5cf6', ib:'rgba(139,92,246,0.15)' },
+    { name:'Motivation',       desc:'Daily quotes & goals',       href:'motivation.html',     icon:'star',     cat:'health',       c1:'rgba(249,115,22,0.12)', ic:'#f97316', ib:'rgba(249,115,22,0.15)' },
+    // Finance
+    { name:'Expenses',         desc:'Track income & spending',    href:'expenses.html',       icon:'dollar',   cat:'finance',      c1:'rgba(16,185,129,0.12)', ic:'#10b981', ib:'rgba(16,185,129,0.15)' },
+    { name:'Calculator',       desc:'Smart multi-mode calc',      href:'calculator.html',     icon:'hash',     cat:'finance',      c1:'rgba(59,130,246,0.12)',  ic:'#3b82f6', ib:'rgba(59,130,246,0.15)' },
+    { name:'Quick Calcs',      desc:'BMI, loan, tip & more',      href:'quickcalculators.html',icon:'calc',    cat:'finance',      c1:'rgba(139,92,246,0.12)', ic:'#8b5cf6', ib:'rgba(139,92,246,0.15)' },
+    // Creative
+    { name:'Brain Dump',       desc:'Capture any thought fast',   href:'braindump.html',      icon:'brain',    cat:'creative',     c1:'rgba(236,72,153,0.12)', ic:'#ec4899', ib:'rgba(236,72,153,0.15)' },
+    { name:'Sticky Notes',     desc:'Visual note canvas',         href:'notes.html',          icon:'note',     cat:'creative',     c1:'rgba(249,115,22,0.12)', ic:'#f97316', ib:'rgba(249,115,22,0.15)' },
+    { name:'Idea Generator',   desc:'AI-powered brainstorming',   href:'ideagenerator.html',  icon:'light',    cat:'creative',     c1:'rgba(16,185,129,0.12)', ic:'#10b981', ib:'rgba(16,185,129,0.15)' },
+    { name:'Puzzles & Games',  desc:'Train your brain',           href:'puzzles.html',        icon:'puzzle',   cat:'creative',     c1:'rgba(139,92,246,0.12)', ic:'#8b5cf6', ib:'rgba(139,92,246,0.15)' },
+    { name:'Knowledge Base',   desc:'Your learning library',      href:'knowledge.html',      icon:'book2',    cat:'creative',     c1:'rgba(6,182,212,0.12)',  ic:'#06b6d4', ib:'rgba(6,182,212,0.15)'  },
+    { name:'Code Snippets',    desc:'Save code for later',        href:'codesnippets.html',   icon:'code',     cat:'creative',     c1:'rgba(59,130,246,0.12)',  ic:'#3b82f6', ib:'rgba(59,130,246,0.15)' },
+    // Tools
+    { name:'Focus Music',      desc:'Ambient sounds to focus',    href:'music.html',          icon:'music',    cat:'tools',        c1:'rgba(236,72,153,0.12)', ic:'#ec4899', ib:'rgba(236,72,153,0.15)' },
+    { name:'Weather',          desc:'Current conditions & forecast',href:'weather.html',      icon:'cloud',    cat:'tools',        c1:'rgba(59,130,246,0.12)',  ic:'#3b82f6', ib:'rgba(59,130,246,0.15)' },
+    { name:'Password Gen',     desc:'Secure password creator',    href:'passwordgen.html',    icon:'lock',     cat:'tools',        c1:'rgba(239,68,68,0.12)',  ic:'#ef4444', ib:'rgba(239,68,68,0.15)'  },
+    { name:'Countdown Timer',  desc:'Event countdown clock',      href:'countdown.html',      icon:'clock',    cat:'tools',        c1:'rgba(249,115,22,0.12)', ic:'#f97316', ib:'rgba(249,115,22,0.15)' },
+    { name:'Timezone Tool',    desc:'World clock & conversion',   href:'timezone.html',       icon:'globe',    cat:'tools',        c1:'rgba(6,182,212,0.12)',  ic:'#06b6d4', ib:'rgba(6,182,212,0.15)'  },
+    { name:'Quick Links',      desc:'Your saved URLs',            href:'quicklinks.html',     icon:'link',     cat:'tools',        c1:'rgba(139,92,246,0.12)', ic:'#8b5cf6', ib:'rgba(139,92,246,0.15)' },
+    { name:'File Zone',        desc:'Organize your files',        href:'filezone.html',       icon:'file',     cat:'tools',        c1:'rgba(16,185,129,0.12)', ic:'#10b981', ib:'rgba(16,185,129,0.15)' },
+    { name:'Reading Timer',    desc:'Track your reading sessions',href:'readingtimer.html',   icon:'read',     cat:'tools',        c1:'rgba(249,115,22,0.12)', ic:'#f97316', ib:'rgba(249,115,22,0.15)' },
+  ];
+
+  const iconSVG = (key) => {
+    const m = {
+      check:  `<polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>`,
+      repeat: `<polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>`,
+      target: `<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>`,
+      timer:  `<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>`,
+      cal:    `<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>`,
+      bar:    `<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>`,
+      book:   `<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>`,
+      smile:  `<circle cx="12" cy="12" r="10"/><path d="M8 13s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>`,
+      heart:  `<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>`,
+      drop:   `<path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>`,
+      moon:   `<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>`,
+      star:   `<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>`,
+      dollar: `<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>`,
+      hash:   `<line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/>`,
+      calc:   `<rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/>`,
+      brain:  `<path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.46 2.5 2.5 0 0 1-1.07-4.81A3 3 0 0 1 4.5 14a2.5 2.5 0 0 1 0-5 2.5 2.5 0 0 1 1.07-4.81A2.5 2.5 0 0 1 9.5 2z"/>`,
+      note:   `<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>`,
+      light:  `<circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/>`,
+      puzzle: `<path d="M19.439 7.85c-.049.322.059.648.289.878l1.568 1.568c.47.47.706 1.087.706 1.704s-.235 1.233-.706 1.704l-1.611 1.611a.98.98 0 0 1-.837.276c-.47-.07-.802-.48-.968-.925a2.501 2.501 0 1 0-3.214 3.214c.446.166.855.497.925.968a.979.979 0 0 1-.276.837l-1.61 1.61a2.404 2.404 0 0 1-1.705.707 2.402 2.402 0 0 1-1.704-.706l-1.568-1.568a1.026 1.026 0 0 0-.877-.29c-.493.074-.84.504-1.02.968a2.5 2.5 0 1 1-3.237-3.237c.464-.18.894-.527.967-1.02a1.026 1.026 0 0 0-.289-.877l-1.568-1.568A2.402 2.402 0 0 1 1.998 12c0-.617.236-1.234.706-1.704L4.23 8.77c.24-.24.581-.353.917-.303.515.077.877.528 1.073 1.01a2.5 2.5 0 1 0 3.259-3.259c-.482-.196-.933-.558-1.01-1.073-.05-.336.062-.676.303-.917l1.525-1.525A2.402 2.402 0 0 1 12 2c.617 0 1.234.236 1.704.706l1.568 1.568c.23.23.556.338.877.29.493-.074.84-.504 1.02-.968a2.5 2.5 0 1 1 3.237 3.237c-.464.18-.894.527-.967 1.02z"/>`,
+      book2:  `<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>`,
+      code:   `<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>`,
+      music:  `<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>`,
+      cloud:  `<path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>`,
+      lock:   `<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>`,
+      clock:  `<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>`,
+      globe:  `<circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>`,
+      link:   `<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>`,
+      file:   `<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>`,
+      read:   `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>`,
+    };
+    return `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${m[key]||''}</svg>`;
+  };
+
+  function renderModules(filter='all') {
+    const grid = document.getElementById('modules-grid');
+    const filtered = filter==='all' ? MODULES : MODULES.filter(m => m.cat===filter);
+    grid.innerHTML = filtered.map(m => `
+      <a href="${m.href}" class="module-card" style="--c1:${m.c1}">
+        <div class="mod-icon" style="background:${m.ib};color:${m.ic}">${iconSVG(m.icon)}</div>
+        <div class="mod-info">
+          <div class="mod-name">${m.name}</div>
+          <div class="mod-desc">${m.desc}</div>
+        </div>
+        <svg class="mod-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+      </a>`).join('');
+  }
+
+  function filterModules(cat, btn) {
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderModules(cat);
+  }
+
+  function setGreeting() {
+    const h = new Date().getHours();
+    const greet = h<12?'Good morning':h<17?'Good afternoon':'Good evening';
+    document.getElementById('greeting').textContent = greet;
+    const user = Auth.getUser();
+    if (user) document.getElementById('user-name-display').textContent = user.name || user.username || 'Friend';
+  }
+
+  function loadWeather() {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(async pos => {
+      const apiKey = localStorage.getItem('sl:weatherKey') || ''; // Injected via admin
+      if (!apiKey) {
+        document.getElementById('ws-desc').textContent = 'Add weather API key in Admin → API Keys';
+        return;
+      }
+      try {
+        const r = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&appid=${apiKey}&units=metric`);
+        const d = await r.json();
+        if (d.main) {
+          document.getElementById('ws-temp').textContent = `${Math.round(d.main.temp)}°C`;
+          document.getElementById('ws-desc').textContent = d.weather[0]?.description || '';
+          document.getElementById('ws-humidity').textContent = `${d.main.humidity}%`;
+          document.getElementById('ws-wind').textContent = `${Math.round((d.wind?.speed||0)*3.6)} km/h`;
+          document.getElementById('ws-time').textContent = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+        }
+      } catch {}
+    }, () => {});
+  }
+
+  function loadStats() {
+    try {
+      const todos   = JSON.parse(localStorage.getItem('sl:todos') || '[]');
+      const habits  = JSON.parse(localStorage.getItem('sl:habits') || '[]');
+      const journal = JSON.parse(localStorage.getItem('sl:journal') || '[]');
+      const focus   = parseInt(localStorage.getItem('sl:totalFocusMin') || '0');
+
+      const pending = todos.filter(t => !t.done).length;
+      const today = new Date().toDateString();
+      const habitsDone = habits.filter(h => h.doneToday).length;
+      const habitsPct  = habits.length ? Math.round(habitsDone/habits.length*100) : 0;
+
+      document.getElementById('stat-tasks').textContent   = todos.length;
+      document.getElementById('stat-streak').textContent  = parseInt(localStorage.getItem('sl:streak')||'0');
+      document.getElementById('stat-focus').textContent   = focus;
+      document.getElementById('qs-pending').textContent   = pending;
+      document.getElementById('qs-habits').textContent    = `${habitsPct}%`;
+      document.getElementById('qs-journal').textContent   = journal.length;
+    } catch {}
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    buildNav('dashboard');
+    buildFooter();
+    setGreeting();
+    renderModules();
+    loadWeather();
+    loadStats();
+    // Load weather API key from storage
+    API.loadData('apikey_weather').then(r => {
+      if (r?.value) localStorage.setItem('sl:weatherKey', r.value);
+    });
+  });
+</script>
+</body>
+</html>

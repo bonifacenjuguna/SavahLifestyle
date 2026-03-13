@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Sticky Notes — SavahLifestyle</title>
+<link rel="stylesheet" href="css/style.css"/>
+<style>
+.notes-board{position:relative;min-height:70vh;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1rem;overflow:hidden}
+.sticky-note{position:absolute;width:200px;min-height:160px;border-radius:12px;padding:1rem;cursor:move;box-shadow:0 4px 20px rgba(0,0,0,0.3);transition:box-shadow 0.2s,transform 0.2s;user-select:none;display:flex;flex-direction:column;gap:0.5rem}
+.sticky-note:hover{box-shadow:0 8px 32px rgba(0,0,0,0.4);z-index:100}
+.sticky-note.dragging{z-index:999;box-shadow:0 16px 48px rgba(0,0,0,0.5);transform:rotate(2deg) scale(1.02)}
+.note-text{flex:1;background:transparent;border:none;font-family:var(--font-body);font-size:0.88rem;color:rgba(0,0,0,0.8);resize:none;min-height:100px;outline:none;line-height:1.5}
+.note-footer{display:flex;justify-content:space-between;align-items:center}
+.note-delete{background:none;border:none;cursor:pointer;opacity:0.5;padding:0;color:rgba(0,0,0,0.6);transition:opacity 0.2s}
+.note-delete:hover{opacity:1}
+.note-time{font-size:0.6rem;color:rgba(0,0,0,0.5)}
+.color-palette{display:flex;gap:0.4rem;flex-wrap:wrap;margin-bottom:1rem}
+.cp{width:28px;height:28px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:transform 0.15s,border-color 0.15s}
+.cp:hover,.cp.selected{transform:scale(1.2);border-color:var(--text)}
+</style>
+<script src="js/app.js" defer></script>
+<script src="js/localAuth.js" defer></script>
+<script src="js/nav.js" defer></script>
+</head>
+<body>
+<div class="page"><div class="container">
+  <div class="page-header"><div><h1 class="page-title">Sticky <span>Notes</span></h1><p class="page-subtitle">Quick reminders you can place anywhere</p></div></div>
+  <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap">
+    <div class="color-palette" id="palette"></div>
+    <button class="btn btn-primary" onclick="addNote()">+ Add Note</button>
+    <button class="btn btn-secondary" onclick="clearAll()">Clear All</button>
+  </div>
+  <div class="notes-board" id="board"></div>
+</div></div>
+<script>
+const colors=['#fef08a','#bbf7d0','#bfdbfe','#fde68a','#f9a8d4','#c4b5fd','#fed7aa','#a5f3fc'];
+let notes=JSON.parse(localStorage.getItem('savah:stickynotes')||'[]');
+let selectedColor=colors[0];
+let dragging=null,offX=0,offY=0;
+
+// Render palette
+document.getElementById('palette').innerHTML=colors.map((c,i)=>`<div class="cp ${i===0?'selected':''}" style="background:${c}" onclick="pickColor('${c}',this)"></div>`).join('');
+
+function pickColor(c,el){selectedColor=c;document.querySelectorAll('.cp').forEach(b=>b.classList.remove('selected'));el.classList.add('selected');}
+
+function addNote(){
+  const note={id:Date.now(),text:'',color:selectedColor,x:Math.floor(Math.random()*60)+5+'%',y:Math.floor(Math.random()*50)+5+'%',created:new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})};
+  notes.push(note);save();renderNotes();
+  setTimeout(()=>document.getElementById('note-text-'+note.id)?.focus(),100);
+}
+
+function deleteNote(id){notes=notes.filter(n=>n.id!==id);save();renderNotes();}
+
+function clearAll(){if(notes.length&&confirm('Clear all notes?')){notes=[];save();renderNotes();}}
+
+function save(){localStorage.setItem('savah:stickynotes',JSON.stringify(notes));}
+
+function renderNotes(){
+  const board=document.getElementById('board');
+  board.innerHTML=notes.map(n=>`
+    <div class="sticky-note" id="note-${n.id}" style="background:${n.color};left:${n.x};top:${n.y}" onmousedown="startDrag(event,${n.id})">
+      <textarea class="note-text" id="note-text-${n.id}" placeholder="Write a note..."
+        onchange="updateNoteText(${n.id},this.value)"
+        onmousedown="event.stopPropagation()">${n.text}</textarea>
+      <div class="note-footer">
+        <span class="note-time">${n.created}</span>
+        <button class="note-delete" onclick="deleteNote(${n.id})" onmousedown="event.stopPropagation()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function updateNoteText(id,text){const n=notes.find(n=>n.id===id);if(n){n.text=text;save();}}
+
+function startDrag(e,id){
+  if(e.target.tagName==='TEXTAREA'||e.target.tagName==='BUTTON'||e.target.tagName==='svg'||e.target.tagName==='line') return;
+  dragging=id;
+  const el=document.getElementById('note-'+id);
+  const rect=el.getBoundingClientRect();
+  const board=document.getElementById('board').getBoundingClientRect();
+  offX=e.clientX-rect.left;offY=e.clientY-rect.top;
+  el.classList.add('dragging');
+  e.preventDefault();
+}
+
+document.addEventListener('mousemove',e=>{
+  if(!dragging) return;
+  const el=document.getElementById('note-'+dragging);
+  const board=document.getElementById('board').getBoundingClientRect();
+  const x=e.clientX-board.left-offX;
+  const y=e.clientY-board.top-offY;
+  el.style.left=Math.max(0,Math.min(board.width-200,x))+'px';
+  el.style.top=Math.max(0,Math.min(board.height-160,y))+'px';
+});
+
+document.addEventListener('mouseup',()=>{
+  if(!dragging) return;
+  const el=document.getElementById('note-'+dragging);
+  el.classList.remove('dragging');
+  const n=notes.find(n=>n.id===dragging);
+  if(n){n.x=el.style.left;n.y=el.style.top;save();}
+  dragging=null;
+});
+
+renderNotes();
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  buildNav('stickynotes');
+  buildFooter();
+});
+</script>
+</body></html>

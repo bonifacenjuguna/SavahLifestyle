@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="theme-color" content="#060810" media="(prefers-color-scheme: dark)"/>
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)"/>
+  <meta name="description" content="Track your expenses and manage your finances."/>
+  <meta name="keywords" content="productivity, lifestyle, wellness, tasks, focus, journal, SavahLifestyle"/>
+  <meta name="author" content="SavahLifestyle"/>
+  <meta name="robots" content="index, follow"/>
+  <meta property="og:title" content="Finance — SavahLifestyle"/>
+  <meta property="og:description" content="Track your expenses and manage your finances."/>
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="SavahLifestyle"/>
+  <meta name="twitter:card" content="summary"/>
+  <meta name="twitter:title" content="Finance — SavahLifestyle"/>
+  <meta name="twitter:description" content="Track your expenses and manage your finances."/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+  <meta name="apple-mobile-web-app-title" content="SavahLifestyle"/>
+  <title>Expense Tracker — SavahLifestyle</title>
+  <link rel="stylesheet" href="css/style.css"/>
+  <script src="js/app.js" defer></script>
+  <script src="js/localAuth.js" defer></script>
+<script src="js/nav.js" defer></script>
+  
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    .expense-item { display:flex; align-items:center; gap:0.75rem; padding:0.85rem 1rem; background:var(--card); border:1px solid var(--border); border-radius:var(--radius-sm); margin-bottom:0.5rem; transition:var(--transition); }
+    .expense-item:hover { border-color:var(--border-accent); }
+    .cat-icon { width:36px; height:36px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0; }
+    .expense-name { flex:1; font-size:0.9rem; color:var(--text); font-weight:500; }
+    .expense-cat { font-size:0.75rem; color:var(--text-muted); }
+    .expense-amount { font-family:var(--font-head); font-size:1rem; font-weight:700; color:var(--danger); flex-shrink:0; }
+    .expense-amount.income { color:var(--success); }
+  </style>
+</head>
+<body>
+<nav class="nav">
+  <a href="index.html" class="nav-logo"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>Savah<span>Lifestyle</span></a>
+  <div class="nav-actions">
+    <a href="index.html" class="nav-back"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>Dashboard</a>
+    <button class="theme-toggle" id="theme-toggle"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/></svg></button>
+  </div>
+</nav>
+<div class="page"><div class="container">
+  <div class="page-header">
+    <div><h1 class="page-title">Expense <span>Tracker</span></h1><p class="page-subtitle">Monitor your finances and control spending</p></div>
+    <button class="btn btn-primary" onclick="openModal('add-modal')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Add Entry
+    </button>
+  </div>
+
+  <!-- Period tabs -->
+  <div class="tabs" style="max-width:300px">
+    <button class="tab active" onclick="setPeriod('today', this)">Today</button>
+    <button class="tab" onclick="setPeriod('week', this)">Week</button>
+    <button class="tab" onclick="setPeriod('month', this)">Month</button>
+    <button class="tab" onclick="setPeriod('all', this)">All</button>
+  </div>
+
+  <!-- Stats -->
+  <div class="grid-4" style="margin-bottom:2rem" id="exp-stats"></div>
+
+  <!-- Charts + List -->
+  <div class="grid-2" style="margin-bottom:2rem">
+    <div class="card">
+      <div class="card-title" style="margin-bottom:1rem">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><path d="M21.21 15.89A10 10 0 118 2.83"/><path d="M22 12A10 10 0 0012 2v10z"/></svg>
+        By Category
+      </div>
+      <div style="height:200px"><canvas id="cat-chart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title" style="margin-bottom:1rem">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Spending Trend
+      </div>
+      <div style="height:200px"><canvas id="trend-chart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- List -->
+  <div id="expense-list"></div>
+</div></div>
+
+<!-- Add Modal -->
+<div class="modal-overlay" id="add-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Add Entry</div>
+      <button class="btn-icon btn" onclick="closeModal('add-modal')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="form-group"><label class="form-label">Description</label><input type="text" id="exp-desc" placeholder="e.g. Groceries" /></div>
+    <div class="form-group"><label class="form-label">Amount (KES)</label><input type="number" id="exp-amount" placeholder="0" min="0" /></div>
+    <div class="form-group"><label class="form-label">Type</label><select id="exp-type"><option value="expense">Expense</option><option value="income">Income</option></select></div>
+    <div class="form-group"><label class="form-label">Category</label>
+      <select id="exp-cat">
+        <option><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><path d="M4 4h16a2 2 0 0 1 2 2v2H2V6a2 2 0 0 1 2-2z"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M4 20h16a2 2 0 0 0 2-2v-2H2v2a2 2 0 0 0 2 2z"/></svg> Food & Dining</option><option><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v9a2 2 0 0 1-2 2h-2"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg> Transport</option><option><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg> Housing</option>
+        <option><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><path d="M10.5 20.5 3.5 13.5a5 5 0 0 1 7-7l7 7a5 5 0 0 1-7 7"/><line x1="8.5" y1="8.5" x2="15.5" y2="15.5"/></svg> Health</option><option><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><line x1="6" y1="12" x2="10" y2="12"/><line x1="8" y1="10" x2="8" y2="14"/><circle cx="15" cy="13" r="1"/><circle cx="18" cy="11" r="1"/><path d="M6 12H2l-1 5 4 3 3-2h8l3 2 4-3-1-5h-4"/></svg> Entertainment</option><option><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><path d="M6 2l-4 6 4 2v12h12V10l4-2-4-6"/><path d="M8 2h8"/></svg> Shopping</option>
+        <option><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg> Education</option><option>💼 Work</option><option><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Savings</option><option>📦 Other</option>
+      </select>
+    </div>
+    <div class="form-group"><label class="form-label">Date</label><input type="date" id="exp-date" /></div>
+    <div style="display:flex;gap:0.75rem;margin-top:1rem">
+      <button class="btn btn-secondary" style="flex:1" onclick="closeModal('add-modal')">Cancel</button>
+      <button class="btn btn-primary" style="flex:1" onclick="addExpense()">Add Entry</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let expenses = JSON.parse(localStorage.getItem('savah:expenses') || '[]');
+let period = 'month';
+let catChart = null, trendChart = null;
+
+document.getElementById('exp-date').value = new Date().toISOString().split('T')[0];
+
+function setPeriod(p, btn) {
+  period = p;
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+}
+
+function getFiltered() {
+  const today = new Date().toISOString().split('T')[0];
+  const weekStart = (() => { const d = new Date(); d.setDate(d.getDate() - d.getDay()); return d.toISOString().split('T')[0]; })();
+  const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
+  return expenses.filter(e => {
+    if (period === 'today') return e.date === today;
+    if (period === 'week') return e.date >= weekStart;
+    if (period === 'month') return e.date >= monthStart;
+    return true;
+  });
+}
+
+function addExpense() {
+  const desc = document.getElementById('exp-desc').value.trim();
+  const amount = parseFloat(document.getElementById('exp-amount').value);
+  if (!desc || !amount) { Toast.show('Fill in all fields', 'warning'); return; }
+  expenses.unshift({ id: Date.now(), desc, amount, type: document.getElementById('exp-type').value, category: document.getElementById('exp-cat').value, date: document.getElementById('exp-date').value });
+  localStorage.setItem('savah:expenses', JSON.stringify(expenses));
+  closeModal('add-modal');
+  document.getElementById('exp-desc').value = '';
+  document.getElementById('exp-amount').value = '';
+  render();
+  Toast.show('Entry added', 'success');
+}
+
+function deleteExpense(id) {
+  expenses = expenses.filter(e => e.id !== id);
+  localStorage.setItem('savah:expenses', JSON.stringify(expenses));
+  render();
+}
+
+function render() {
+  const filtered = getFiltered();
+  const income = filtered.filter(e => e.type === 'income').reduce((s, e) => s + e.amount, 0);
+  const spent = filtered.filter(e => e.type === 'expense').reduce((s, e) => s + e.amount, 0);
+  const balance = income - spent;
+
+  document.getElementById('exp-stats').innerHTML = [
+    { label: 'Total Spent', value: `KES ${spent.toLocaleString()}`, color: 'var(--danger)' },
+    { label: 'Total Income', value: `KES ${income.toLocaleString()}`, color: 'var(--success)' },
+    { label: 'Balance', value: `KES ${balance.toLocaleString()}`, color: balance >= 0 ? 'var(--success)' : 'var(--danger)' },
+    { label: 'Transactions', value: filtered.length, color: 'var(--blue)' },
+  ].map(s => `<div class="stat-card"><div><div class="stat-value" style="color:${s.color};font-size:1.3rem">${s.value}</div><div class="stat-label">${s.label}</div></div></div>`).join('');
+
+  // Category chart
+  const catData = {};
+  filtered.filter(e => e.type === 'expense').forEach(e => { catData[e.category] = (catData[e.category] || 0) + e.amount; });
+  const cats = Object.keys(catData), catAmts = Object.values(catData);
+  const colors = ['#f0b429','#ef4444','#3b82f6','#22c55e','#a855f7','#f59e0b','#14b8a6','#ec4899','#6366f1','#94a3b8'];
+
+  if (catChart) catChart.destroy();
+  catChart = new Chart(document.getElementById('cat-chart'), {
+    type: 'doughnut',
+    data: { labels: cats, datasets: [{ data: catAmts, backgroundColor: colors.slice(0, cats.length), borderWidth: 0 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: '#94a3b8', font: { size: 10 }, boxWidth: 12 } } } }
+  });
+
+  // Trend chart — last 7 days
+  const days = Array.from({length: 7}, (_, i) => { const d = new Date(); d.setDate(d.getDate() - (6-i)); return d.toISOString().split('T')[0]; });
+  const dayTotals = days.map(day => expenses.filter(e => e.date === day && e.type === 'expense').reduce((s, e) => s + e.amount, 0));
+  if (trendChart) trendChart.destroy();
+  trendChart = new Chart(document.getElementById('trend-chart'), {
+    type: 'bar',
+    data: { labels: days.map(d => new Date(d).toLocaleDateString('en-US', { weekday: 'short' })), datasets: [{ label: 'Spent', data: dayTotals, backgroundColor: 'rgba(240,180,41,0.4)', borderColor: '#f0b429', borderWidth: 1, borderRadius: 4 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#64748b' }, grid: { display: false } }, y: { ticks: { color: '#64748b' }, grid: { color: 'rgba(255,255,255,0.04)' } } } }
+  });
+
+  if (!filtered.length) {
+    document.getElementById('expense-list').innerHTML = `<div class="empty-state"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg><h3>No entries</h3><p>Add your first expense or income above.</p></div>`;
+    return;
+  }
+
+  document.getElementById('expense-list').innerHTML = filtered.map(e => `
+    <div class="expense-item">
+      <div class="cat-icon" style="background:${e.type === 'income' ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.12)'}">${e.category.split(' ')[0]}</div>
+      <div style="flex:1"><div class="expense-name">${e.desc}</div><div class="expense-cat">${e.category} · ${e.date}</div></div>
+      <div class="expense-amount ${e.type === 'income' ? 'income' : ''}">${e.type === 'income' ? '+' : '-'}KES ${e.amount.toLocaleString()}</div>
+      <button class="btn-icon btn" onclick="deleteExpense(${e.id})"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>
+    </div>
+  `).join('');
+}
+render();
+</script>
+</body>
+</html>

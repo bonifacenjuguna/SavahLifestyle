@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Settings — SavahLifestyle v6</title>
+<link rel="stylesheet" href="css/style.css"/>
+<script src="js/app.js" defer></script>
+<script src="js/localAuth.js" defer></script>
+<script src="js/nav.js" defer></script>
+<style>
+.settings-nav { display:flex; flex-direction:column; gap:0.25rem; }
+.snav-item { display:flex; align-items:center; gap:0.75rem; padding:0.75rem 1rem; border-radius:var(--radius-sm); cursor:pointer; transition:var(--transition); font-size:0.88rem; font-weight:500; color:var(--text-muted); border:none; background:none; text-align:left; width:100%; }
+.snav-item svg { flex-shrink:0; opacity:0.6; }
+.snav-item:hover { background:var(--border); color:var(--text); }
+.snav-item.active { background:var(--blue-dim); color:var(--blue); border:1px solid var(--blue-border); }
+.snav-item.active svg { opacity:1; }
+.setting-row { display:flex; align-items:center; justify-content:space-between; padding:1.1rem 0; border-bottom:1px solid var(--border); gap:1rem; flex-wrap:wrap; }
+.setting-row:last-child { border-bottom:none; }
+.setting-label { font-weight:600; font-size:0.9rem; }
+.setting-desc { font-size:0.79rem; color:var(--text-muted); margin-top:0.2rem; max-width:420px; }
+.spanel { display:none; }
+.spanel.active { display:block; animation:fadeUp 0.2s ease both; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;} }
+.section-title { font-family:var(--font-head); font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-muted); margin:1.5rem 0 0.5rem; }
+.section-title:first-child { margin-top:0; }
+</style>
+</head>
+<body>
+<div id="page-loader"><div class="loader-logo"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>Savah<span>Lifestyle</span></div><div class="loader-bar-wrap"><div class="loader-bar"></div></div></div>
+
+<div class="page"><div class="container" style="padding-bottom:3rem">
+  <div class="page-header">
+    <div><h1 class="page-title">App <span>Settings</span></h1><p class="page-subtitle">Customize your SavahLifestyle experience</p></div>
+    <a href="index.html" class="nav-back"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg> Dashboard</a>
+  </div>
+
+  <div class="grid-2" style="align-items:start;gap:1.5rem">
+    <!-- Sidebar nav -->
+    <div class="card" style="padding:0.75rem">
+      <nav class="settings-nav">
+        <button class="snav-item active" id="snav-appearance" onclick="showPanel('appearance',this)">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          Appearance
+        </button>
+        <button class="snav-item" id="snav-general" onclick="showPanel('general',this)">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          General
+        </button>
+        <button class="snav-item" id="snav-notifications" onclick="showPanel('notifications',this)">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          Notifications
+        </button>
+        <button class="snav-item" id="snav-privacy" onclick="showPanel('privacy',this)">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Privacy & Security
+        </button>
+        <button class="snav-item" id="snav-data" onclick="showPanel('data',this)">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+          Data & Storage
+        </button>
+        <button class="snav-item" id="snav-accessibility" onclick="showPanel('accessibility',this)">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+          Accessibility
+        </button>
+        <button class="snav-item" id="snav-about" onclick="showPanel('about',this)">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          About
+        </button>
+      </nav>
+    </div>
+
+    <!-- Panels -->
+    <div>
+
+      <!-- Appearance -->
+      <div class="spanel active card card-p" id="spanel-appearance">
+        <div class="section-title">Theme</div>
+        <div class="setting-row">
+          <div><div class="setting-label">Color Theme</div><div class="setting-desc">Switch between dark and light mode</div></div>
+          <div style="display:flex;gap:0.5rem">
+            <button class="btn btn-secondary btn-sm" id="app-dark" onclick="applyTheme('dark')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg> Dark</button>
+            <button class="btn btn-secondary btn-sm" id="app-light" onclick="applyTheme('light')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/></svg>️ Light</button>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div><div class="setting-label">Matrix Animation</div><div class="setting-desc">Background character rain effect</div></div>
+          <label class="switch"><div class="switch-track on" id="sw-matrix" onclick="toggleSetting('sw-matrix','matrix')"><div class="switch-knob"></div></div></label>
+        </div>
+        <div class="setting-row">
+          <div><div class="setting-label">Animation Speed</div><div class="setting-desc">Speed of background matrix</div></div>
+          <select class="form-select" style="width:auto" id="sel-speed" onchange="setSetting('matrix_speed',this.value)">
+            <option value="slow">Slow</option>
+            <option value="normal" selected>Normal</option>
+            <option value="fast">Fast</option>
+          </select>
+        </div>
+        <div class="setting-row">
+          <div><div class="setting-label">Canvas Opacity</div><div class="setting-desc">How visible the matrix effect is (0–100)</div></div>
+          <input type="range" min="0" max="100" value="18" id="sl-opacity" style="width:100px" oninput="document.getElementById('opacity-val').textContent=this.value+'%';setSetting('matrix_opacity',this.value)"/>
+          <span id="opacity-val" style="font-size:0.78rem;color:var(--text-muted);width:38px;text-align:right">18%</span>
+        </div>
+
+        <div class="section-title">Accent Colors</div>
+        <div class="setting-row">
+          <div><div class="setting-label">Primary Accent</div><div class="setting-desc">Used for active elements and highlights</div></div>
+          <div style="display:flex;gap:0.4rem">
+            <div onclick="setAccent('blue')"   style="width:24px;height:24px;border-radius:50%;background:#3b82f6;cursor:pointer;border:2px solid transparent" id="accent-blue"></div>
+            <div onclick="setAccent('purple')" style="width:24px;height:24px;border-radius:50%;background:#8b5cf6;cursor:pointer;border:2px solid transparent" id="accent-purple"></div>
+            <div onclick="setAccent('green')"  style="width:24px;height:24px;border-radius:50%;background:#10b981;cursor:pointer;border:2px solid transparent" id="accent-green"></div>
+            <div onclick="setAccent('red')"    style="width:24px;height:24px;border-radius:50%;background:#ef4444;cursor:pointer;border:2px solid transparent" id="accent-red"></div>
+            <div onclick="setAccent('orange')" style="width:24px;height:24px;border-radius:50%;background:#f97316;cursor:pointer;border:2px solid transparent" id="accent-orange"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- General -->
+      <div class="spanel card card-p" id="spanel-general">
+        <div class="section-title">Regional</div>
+        <div class="setting-row">
+          <div><div class="setting-label">Language</div><div class="setting-desc">Display language for the interface</div></div>
+          <select class="form-select" style="width:auto" id="gen-lang" onchange="setSetting('lang',this.value)">
+            <option value="en">English</option>
+            <option value="sw">Swahili</option>
+            <option value="fr">French</option>
+            <option value="es">Spanish</option>
+          </select>
+        </div>
+        <div class="setting-row">
+          <div><div class="setting-label">Temperature</div><div class="setting-desc">Celsius or Fahrenheit for weather</div></div>
+          <select class="form-select" style="width:auto" id="gen-temp" onchange="setSetting('temp',this.value)">
+            <option value="C">°C — Celsius</option>
+            <option value="F">°F — Fahrenheit</option>
+          </select>
+        </div>
+        <div class="setting-row">
+          <div><div class="setting-label">Currency</div><div class="setting-desc">Default currency for expenses module</div></div>
+          <select class="form-select" style="width:auto" id="gen-currency" onchange="setSetting('currency',this.value)">
+            <option value="USD">USD ($)</option>
+            <option value="EUR">EUR (€)</option>
+            <option value="GBP">GBP (£)</option>
+            <option value="KES">KES (Ksh)</option>
+            <option value="NGN">NGN (₦)</option>
+          </select>
+        </div>
+
+        <div class="section-title">Behaviour</div>
+        <div class="setting-row">
+          <div><div class="setting-label">Auto-save</div><div class="setting-desc">Automatically save changes as you type</div></div>
+          <label class="switch"><div class="switch-track on" id="sw-autosave" onclick="toggleSetting('sw-autosave','autosave')"><div class="switch-knob"></div></div></label>
+        </div>
+        <div class="setting-row">
+          <div><div class="setting-label">Show Page Loader</div><div class="setting-desc">Animated logo on page load</div></div>
+          <label class="switch"><div class="switch-track on" id="sw-loader" onclick="toggleSetting('sw-loader','loader')"><div class="switch-knob"></div></div></label>
+        </div>
+        <div class="setting-row">
+          <div><div class="setting-label">Keyboard Shortcuts</div><div class="setting-desc">Enable app-wide keyboard shortcuts</div></div>
+          <label class="switch"><div class="switch-track on" id="sw-keys" onclick="toggleSetting('sw-keys','shortcuts')"><div class="switch-knob"></div></div></label>
+        </div>
+      </div>
+
+      <!-- Notifications -->
+      <div class="spanel card card-p" id="spanel-notifications">
+        <div class="setting-row">
+          <div><div class="setting-label">Browser Notifications</div><div class="setting-desc">Allow push notifications in your browser</div></div>
+          <button class="btn btn-secondary btn-sm" onclick="requestNotifPermission()">Request Access</button>
+        </div>
+        <div class="setting-row">
+          <div><div class="setting-label">Daily Reminders</div><div class="setting-desc">Remind me about incomplete tasks at</div></div>
+          <input type="time" class="form-input" style="width:auto" value="08:00" id="reminder-time"/>
+        </div>
+        <div class="setting-row">
+          <div><div class="setting-label">Habit Nudges</div><div class="setting-desc">Alert when daily habits are not completed</div></div>
+          <label class="switch"><div class="switch-track on" id="sw-habit-notif" onclick="toggleSetting('sw-habit-notif','notif_habits')"><div class="switch-knob"></div></div></label>
+        </div>
+        <div class="setting-row">
+          <div><div class="setting-label">Budget Alerts</div><div class="setting-desc">Notify when monthly budget limit is reached</div></div>
+          <label class="switch"><div class="switch-track" id="sw-budget-notif" onclick="toggleSetting('sw-budget-notif','notif_budget')"><div class="switch-knob"></div></div></label>
+        </div>
+        <div class="setting-row">
+          <div><div class="setting-label">Focus Session Complete</div><div class="setting-desc">Sound + notification on timer end</div></div>
+          <label class="switch"><div class="switch-track on" id="sw-focus-notif" onclick="toggleSetting('sw-focus-notif','notif_focus')"><div class="switch-knob"></div></div></label>
+        </div>
+        <div class="setting-row">
+          <div><div class="setting-label">Weekly Digest</div><div class="setting-desc">Summary email every Sunday</div></div>
+          <label class="switch"><div class="switch-track on" id="sw-weekly-notif" onclick="toggleSetting('sw-weekly-notif','notif_weekly')"><div class="switch-knob"></div></div></label>
+        </div>
+        <button class="btn btn-primary btn-sm" style="margin-top:0.5rem" onclick="saveNotifSettings()">Save Notification Settings</button>
+      </div>
+
+      <!-- Privacy -->
+      <div class="spanel card card-p" id="spanel-privacy">
+        <div class="section-title">Account Security</div>
+        <div class="setting-row">
+          <div><div class="setting-label">Two-Factor Authentication</div><div class="setting-desc">Add a second layer of security to your account</div></div>
+          <button class="btn btn-secondary btn-sm">Enable 2FA</button>
+        </div>
+        <div class="setting-row">
+          <div><div class="setting-label">Change Password</div><div class="setting-desc">Update your account password</div></div>
+          <a href="profile.html" class="btn btn-secondary btn-sm">Go to Profile</a>
+        </div>
+        <div class="section-title">Privacy Controls</div>
+        <div class="setting-row">
+          <div><div class="setting-label">Usage Analytics</div><div class="setting-desc">Help improve SavahLifestyle by sending anonymous usage data</div></div>
+          <label class="switch"><div class="switch-track on" id="sw-analytics" onclick="toggleSetting('sw-analytics','analytics')"><div class="switch-knob"></div></div></label>
+        </div>
+        <div class="setting-row">
+          <div><div class="setting-label">Location Services</div><div class="setting-desc">Allow weather and timezone auto-detection</div></div>
+          <label class="switch"><div class="switch-track on" id="sw-location" onclick="toggleSetting('sw-location','location')"><div class="switch-knob"></div></div></label>
+        </div>
+      </div>
+
+      <!-- Data -->
+      <div class="spanel card card-p" id="spanel-data">
+        <div class="section-title">Storage</div>
+        <div class="setting-row">
+          <div><div class="setting-label">Export All Data</div><div class="setting-desc">Download all your data as a JSON file</div></div>
+          <button class="btn btn-secondary btn-sm" onclick="exportAllData()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export
+          </button>
+        </div>
+        <div class="setting-row">
+          <div><div class="setting-label">Import Data</div><div class="setting-desc">Restore data from a previous export</div></div>
+          <button class="btn btn-secondary btn-sm" onclick="document.getElementById('import-file').click()">Import</button>
+          <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(this)"/>
+        </div>
+        <div class="setting-row">
+          <div><div class="setting-label">Clear Cache</div><div class="setting-desc">Remove temporary data and cached assets</div></div>
+          <button class="btn btn-secondary btn-sm" onclick="clearCache()">Clear Cache</button>
+        </div>
+        <div class="section-title">Danger Zone</div>
+        <div class="setting-row">
+          <div><div class="setting-label" style="color:var(--danger)">Reset All Data</div><div class="setting-desc">Permanently delete all app data. This cannot be undone.</div></div>
+          <button class="btn btn-danger btn-sm" onclick="resetAllData()">Reset</button>
+        </div>
+      </div>
+
+      <!-- Accessibility -->
+      <div class="spanel card card-p" id="spanel-accessibility">
+        <div class="setting-row">
+          <div><div class="setting-label">Reduced Motion</div><div class="setting-desc">Disable animations and transitions</div></div>
+          <label class="switch"><div class="switch-track" id="sw-motion" onclick="toggleSetting('sw-motion','reduced_motion')"><div class="switch-knob"></div></div></label>
+        </div>
+        <div class="setting-row">
+          <div><div class="setting-label">Large Text</div><div class="setting-desc">Increase base font size across the app</div></div>
+          <label class="switch"><div class="switch-track" id="sw-large-text" onclick="toggleLargeText()"><div class="switch-knob"></div></div></label>
+        </div>
+        <div class="setting-row">
+          <div><div class="setting-label">High Contrast</div><div class="setting-desc">Increase visual contrast for readability</div></div>
+          <label class="switch"><div class="switch-track" id="sw-contrast" onclick="toggleSetting('sw-contrast','high_contrast')"><div class="switch-knob"></div></div></label>
+        </div>
+        <div class="setting-row">
+          <div><div class="setting-label">Screen Reader Mode</div><div class="setting-desc">Optimize ARIA labels for screen readers</div></div>
+          <label class="switch"><div class="switch-track" id="sw-aria" onclick="toggleSetting('sw-aria','screen_reader')"><div class="switch-knob"></div></div></label>
+        </div>
+      </div>
+
+      <!-- About -->
+      <div class="spanel card card-p" id="spanel-about">
+        <div style="text-align:center;padding:1.5rem 0">
+          <div style="display:flex;justify-content:center;margin-bottom:1rem">
+            <div style="width:70px;height:70px;background:linear-gradient(135deg,var(--blue),var(--purple));border-radius:18px;display:flex;align-items:center;justify-content:center">
+              <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+            </div>
+          </div>
+          <div style="font-family:var(--font-head);font-size:1.4rem;font-weight:800">SavahLifestyle</div>
+          <div style="color:var(--blue);font-size:0.85rem;margin-top:0.25rem">Version 6.0.0</div>
+          <p style="color:var(--text-muted);font-size:0.85rem;margin-top:0.75rem;max-width:360px;margin-left:auto;margin-right:auto">Your all-in-one digital productivity hub. Built for focus, growth, and a balanced lifestyle.</p>
+        </div>
+        <div class="setting-row">
+          <div><div class="setting-label">Website</div></div>
+          <a href="https://savahlifestyle.com" target="_blank" class="btn btn-secondary btn-sm">Visit Site</a>
+        </div>
+        <div class="setting-row">
+          <div><div class="setting-label">Privacy Policy</div></div>
+          <a href="privacy.html" class="btn btn-secondary btn-sm">Read</a>
+        </div>
+        <div class="setting-row">
+          <div><div class="setting-label">Terms of Service</div></div>
+          <a href="terms.html" class="btn btn-secondary btn-sm">Read</a>
+        </div>
+        <div class="setting-row">
+          <div><div class="setting-label">Suggest a Feature</div></div>
+          <a href="suggest.html" class="btn btn-primary btn-sm">Suggest</a>
+        </div>
+        <div class="setting-row">
+          <div><div class="setting-label">Contact Support</div></div>
+          <a href="contact.html" class="btn btn-secondary btn-sm">Contact</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div></div>
+
+<script>
+function showPanel(name, btn) {
+  document.querySelectorAll('.spanel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.snav-item').forEach(b => b.classList.remove('active'));
+  document.getElementById('spanel-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+
+function toggleSetting(id, key) {
+  const el = document.getElementById(id);
+  el.classList.toggle('on');
+  localStorage.setItem('sl:setting:' + key, el.classList.contains('on') ? '1' : '0');
+  Toast.show(el.classList.contains('on') ? 'Enabled' : 'Disabled', 'info', 1000);
+}
+
+function setSetting(key, val) {
+  localStorage.setItem('sl:setting:' + key, val);
+}
+
+function applyTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  localStorage.setItem('sl:theme', t);
+  document.getElementById('app-dark').classList.toggle('btn-primary', t === 'dark');
+  document.getElementById('app-light').classList.toggle('btn-primary', t === 'light');
+  Toast.show(`${t.charAt(0).toUpperCase()+t.slice(1)} mode`, 'success', 1200);
+}
+
+function setAccent(color) {
+  document.querySelectorAll('[id^="accent-"]').forEach(el => el.style.borderColor = 'transparent');
+  document.getElementById('accent-' + color).style.borderColor = '#fff';
+  localStorage.setItem('sl:setting:accent', color);
+  Toast.show(`Accent: ${color}`, 'info', 1000);
+}
+
+function toggleLargeText() {
+  const el = document.getElementById('sw-large-text');
+  el.classList.toggle('on');
+  const on = el.classList.contains('on');
+  document.documentElement.style.fontSize = on ? '18px' : '';
+  localStorage.setItem('sl:setting:large_text', on ? '1' : '0');
+}
+
+function requestNotifPermission() {
+  if (!('Notification' in window)) { Toast.show('Notifications not supported', 'warning'); return; }
+  Notification.requestPermission().then(p => Toast.show(p === 'granted' ? 'Notifications enabled!' : 'Permission denied', p === 'granted' ? 'success' : 'error'));
+}
+
+function saveNotifSettings() {
+  setSetting('reminder_time', document.getElementById('reminder-time').value);
+  Toast.show('Notification settings saved!', 'success');
+}
+
+function exportAllData() {
+  const data = {};
+  for (let k of Object.keys(localStorage)) {
+    if (k.startsWith('savah:') || k.startsWith('sl:')) data[k] = localStorage.getItem(k);
+  }
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `savahlifestyle_backup_${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+  Toast.show('Data exported!', 'success');
+}
+
+function importData(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      Object.keys(data).forEach(k => localStorage.setItem(k, data[k]));
+      Toast.show('Data imported! Reloading...', 'success');
+      setTimeout(() => location.reload(), 1500);
+    } catch { Toast.show('Invalid backup file', 'error'); }
+  };
+  reader.readAsText(file);
+}
+
+function clearCache() {
+  if ('caches' in window) {
+    caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+  }
+  Toast.show('Cache cleared', 'info');
+}
+
+function resetAllData() {
+  if (!confirm('This will permanently delete ALL your SavahLifestyle data including tasks, habits, journals, expenses, notes, and settings. Are you absolutely sure?')) return;
+  const protect = ['sl:theme','sl:user'];
+  Object.keys(localStorage).forEach(k => { if (!protect.includes(k)) localStorage.removeItem(k); });
+  Toast.show('All data reset!', 'warning', 3000);
+  setTimeout(() => location.reload(), 2000);
+}
+
+// Init theme buttons
+const theme = document.documentElement.getAttribute('data-theme');
+document.getElementById('app-dark').classList.toggle('btn-primary', theme === 'dark');
+document.getElementById('app-light').classList.toggle('btn-primary', theme === 'light');
+
+document.addEventListener('DOMContentLoaded', () => {
+  buildNav('settings');
+  buildFooter();
+});
+</script>
+</body></html>

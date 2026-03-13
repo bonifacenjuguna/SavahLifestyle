@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Random Knowledge — SavahLifestyle</title>
+  <link rel="stylesheet" href="css/style.css"/>
+  <style>.fact-card{min-height:200px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}.fact-text{font-family:var(--font-head);font-size:clamp(1rem,2.5vw,1.4rem);font-weight:700;color:var(--text);line-height:1.5;max-width:650px}.fact-category{font-size:0.75rem;color:var(--blue);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:1rem}</style>
+<script src="js/app.js" defer></script>
+<script src="js/localAuth.js" defer></script>
+<script src="js/nav.js" defer></script>
+</head>
+<body>
+<div class="page"><div class="container-sm">
+  <div class="page-header"><div><h1 class="page-title">Random <span>Knowledge</span></h1><p class="page-subtitle">Expand your mind with fascinating facts</p></div></div>
+  <div class="card card-gold fact-card" id="fact-card">
+    <div class="fact-category" id="fact-cat">Science</div>
+    <div class="fact-text" id="fact-text">Loading an amazing fact...</div>
+  </div>
+  <div style="display:flex;justify-content:center;gap:0.75rem;margin-top:1.5rem;flex-wrap:wrap">
+    <button class="btn btn-primary" onclick="nextFact()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg> New Fact</button>
+    <button class="btn btn-secondary" onclick="copyFact()">Copy Fact</button>
+  </div>
+  <div style="display:flex;gap:0.5rem;justify-content:center;margin-top:1.5rem;flex-wrap:wrap" id="cat-filters">
+    <button class="filter-btn active" onclick="setFactCat('all',this)">All</button>
+    <button class="filter-btn" onclick="setFactCat('science',this)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><path d="M14.5 2.5l-5 9"/><path d="M7.5 13.5l-3 5"/><path d="M9.5 11.5l2-1"/><path d="M4 21h16"/><path d="M12 21a5 5 0 0 0 0-10"/></svg> Science</button>
+    <button class="filter-btn" onclick="setFactCat('history',this)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> History</button>
+    <button class="filter-btn" onclick="setFactCat('nature',this)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><path d="M17 8C8 10 5.9 16.17 3.82 19"/><path d="M2 20c0 0 4-4 8-4 4 0 6-3 6-3s2 0 4-4c-2 0-4 1-6 2-2-4-4-4-8-4 0 5 4 6 4 6"/></svg> Nature</button>
+    <button class="filter-btn" onclick="setFactCat('technology',this)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="2" y1="20" x2="22" y2="20"/></svg> Technology</button>
+    <button class="filter-btn" onclick="setFactCat('space',this)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><path d="M9 11l-6 6 3 3 6-6"/><path d="M12 2c0 0 5 1 9 9-5 2-8 0-8 0s-2-3 0-9z"/></svg> Space</button>
+  </div>
+  <style>.filter-btn{padding:0.3rem 0.8rem;border-radius:999px;background:var(--card);border:1px solid var(--border);color:var(--text-muted);font-size:0.78rem;cursor:pointer;transition:var(--transition)}.filter-btn.active{background:var(--blue-dim);border-color:var(--border-accent);color:var(--blue)}</style>
+</div></div>
+<script>
+const facts=[
+  {text:"Honey never spoils. Archaeologists have found 3,000-year-old honey in Egyptian tombs that was still perfectly edible.",cat:"history"},
+  {text:"A day on Venus is longer than a year on Venus. It takes 243 Earth days to rotate once but only 225 Earth days to orbit the Sun.",cat:"space"},
+  {text:"The human body has around 37 trillion cells, and each one contains about 2 meters of DNA.",cat:"science"},
+  {text:"Octopuses have three hearts, blue blood, and can edit their own RNA to adapt to temperature changes.",cat:"nature"},
+  {text:"The first computer bug was an actual real bug — a moth found in a relay of the Harvard Mark II computer in 1947.",cat:"technology"},
+  {text:"More stars exist in the observable universe than grains of sand on all of Earth's beaches.",cat:"space"},
+  {text:"The Great Wall of China is not visible from space with the naked eye. This is a common myth — it's too narrow.",cat:"history"},
+  {text:"Trees can communicate with each other through underground fungal networks, sharing nutrients and distress signals.",cat:"nature"},
+  {text:"Light from the Sun takes about 8 minutes and 20 seconds to reach Earth.",cat:"space"},
+  {text:"The first email was sent in 1971 by Ray Tomlinson. The content was likely 'QWERTYUIOP' — just a test.",cat:"technology"},
+  {text:"Sharks are older than trees. Sharks have been around for 450 million years, while trees appeared about 360 million years ago.",cat:"nature"},
+  {text:"Cleopatra lived closer in time to the Moon landing than to the construction of the Great Pyramid.",cat:"history"},
+  {text:"The human brain generates about 70,000 thoughts per day and uses about 20% of the body's total energy.",cat:"science"},
+  {text:"There are more possible iterations of a game of chess than there are atoms in the known universe.",cat:"science"},
+  {text:"The first known use of anesthesia in surgery was recorded in China around 200 AD by the physician Hua Tuo.",cat:"history"},
+  {text:"A group of flamingos is called a 'flamboyance'. A group of crows is an 'ominous murder'.",cat:"nature"},
+  {text:"Wi-Fi doesn't actually stand for 'Wireless Fidelity'. It's a made-up term that was created just because it sounded catchy.",cat:"technology"},
+  {text:"Water can boil and freeze at the same time. This is called the 'triple point' and occurs at a specific temperature and pressure.",cat:"science"},
+  {text:"The universe is about 13.8 billion years old. If that were compressed into one year, humans appeared in the last 10 minutes.",cat:"space"},
+  {text:"Wombats produce cube-shaped poop — the only known animal to do so. They use it to mark their territory.",cat:"nature"},
+];
+let factIdx=0, factCat='all';
+function setFactCat(cat,btn){factCat=cat;document.querySelectorAll('#cat-filters .filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');nextFact();}
+function getFiltered(){return factCat==='all'?facts:facts.filter(f=>f.cat===factCat);}
+function nextFact(){const filtered=getFiltered();factIdx=(factIdx+1)%filtered.length;const f=filtered[factIdx];const card=document.getElementById('fact-card');card.style.opacity='0';setTimeout(()=>{document.getElementById('fact-text').textContent=f.text;document.getElementById('fact-cat').textContent=f.cat.charAt(0).toUpperCase()+f.cat.slice(1)+' Fact';card.style.opacity='1';},200);card.style.transition='opacity 0.3s';}
+function copyFact(){navigator.clipboard.writeText(document.getElementById('fact-text').textContent).then(()=>Toast.show('Fact copied!','success'));}
+factIdx=Math.floor(Math.random()*facts.length);
+const f=facts[factIdx];
+document.getElementById('fact-text').textContent=f.text;
+document.getElementById('fact-cat').textContent=f.cat.charAt(0).toUpperCase()+f.cat.slice(1)+' Fact';
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  buildNav('knowledge');
+  buildFooter();
+});
+</script>
+</body></html>

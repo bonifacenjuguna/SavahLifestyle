@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Time Zone Converter — SavahLifestyle</title>
+<link rel="stylesheet" href="css/style.css"/>
+<style>.tz-display{text-align:center}.tz-time{font-family:var(--font-head);font-size:3rem;font-weight:800;color:var(--blue);line-height:1}.tz-date{font-size:0.85rem;color:var(--text-muted);margin-top:0.3rem}.tz-city{font-size:1rem;font-weight:600;color:var(--text);margin-top:0.5rem}</style>
+<script src="js/app.js" defer></script>
+<script src="js/localAuth.js" defer></script>
+<script src="js/nav.js" defer></script>
+</head>
+<body>
+<div class="page"><div class="container-sm">
+  <div class="page-header"><div><h1 class="page-title">Time Zone <span>Converter</span></h1><p class="page-subtitle">Convert time across any two cities worldwide</p></div></div>
+  <div class="grid-2">
+    <div class="card card-gold">
+      <div class="form-group"><label class="form-label">From City</label>
+        <select id="tz1" onchange="updateTimes()"></select>
+      </div>
+      <div class="tz-display"><div class="tz-time" id="tz1-time">--:--</div><div class="tz-date" id="tz1-date"></div><div class="tz-city" id="tz1-city"></div></div>
+    </div>
+    <div class="card card-gold">
+      <div class="form-group"><label class="form-label">To City</label>
+        <select id="tz2" onchange="updateTimes()"></select>
+      </div>
+      <div class="tz-display"><div class="tz-time" id="tz2-time">--:--</div><div class="tz-date" id="tz2-date"></div><div class="tz-city" id="tz2-city"></div></div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:1.5rem;text-align:center">
+    <div id="tz-diff" style="font-family:var(--font-head);font-size:1.1rem;font-weight:700;color:var(--text)">Select two cities to compare</div>
+    <div style="margin-top:1rem"><label class="form-label">Convert specific time</label>
+      <div style="display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap">
+        <input type="time" id="custom-time" style="width:auto;padding:0.5rem 0.85rem"/>
+        <button class="btn btn-primary" onclick="convertCustomTime()">Convert</button>
+      </div>
+      <div id="custom-result" style="margin-top:0.75rem;font-size:0.9rem;color:var(--text-muted)"></div>
+    </div>
+  </div>
+  <div class="section" style="margin-top:2rem">
+    <div class="section-title">World Clock</div>
+    <div class="grid-4" id="world-clock"></div>
+  </div>
+</div></div>
+<script>
+const timezones=[
+  {city:'Nairobi',tz:'Africa/Nairobi',flag:'🇰🇪'},
+  {city:'London',tz:'Europe/London',flag:'🇬🇧'},
+  {city:'New York',tz:'America/New_York',flag:'🇺🇸'},
+  {city:'Los Angeles',tz:'America/Los_Angeles',flag:'🇺🇸'},
+  {city:'Dubai',tz:'Asia/Dubai',flag:'🇦🇪'},
+  {city:'Tokyo',tz:'Asia/Tokyo',flag:'🇯🇵'},
+  {city:'Singapore',tz:'Asia/Singapore',flag:'🇸🇬'},
+  {city:'Paris',tz:'Europe/Paris',flag:'🇫🇷'},
+  {city:'Sydney',tz:'Australia/Sydney',flag:'🇦🇺'},
+  {city:'Toronto',tz:'America/Toronto',flag:'🇨🇦'},
+  {city:'Mumbai',tz:'Asia/Kolkata',flag:'🇮🇳'},
+  {city:'Beijing',tz:'Asia/Shanghai',flag:'🇨🇳'},
+  {city:'Lagos',tz:'Africa/Lagos',flag:'🇳🇬'},
+  {city:'Johannesburg',tz:'Africa/Johannesburg',flag:'🇿🇦'},
+  {city:'Cairo',tz:'Africa/Cairo',flag:'🇪🇬'},
+  {city:'São Paulo',tz:'America/Sao_Paulo',flag:'🇧🇷'},
+  {city:'Mexico City',tz:'America/Mexico_City',flag:'🇲🇽'},
+  {city:'Riyadh',tz:'Asia/Riyadh',flag:'🇸🇦'},
+  {city:'Seoul',tz:'Asia/Seoul',flag:'🇰🇷'},
+  {city:'Amsterdam',tz:'Europe/Amsterdam',flag:'🇳🇱'},
+];
+const opts=timezones.map((t,i)=>`<option value="${i}">${t.flag} ${t.city}</option>`).join('');
+document.getElementById('tz1').innerHTML=opts;
+document.getElementById('tz2').innerHTML=opts;
+document.getElementById('tz1').value='0'; // Nairobi
+document.getElementById('tz2').value='1'; // London
+
+function getTime(tz){return new Date().toLocaleString('en-US',{timeZone:tz,hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true});}
+function getDate(tz){return new Date().toLocaleDateString('en-US',{timeZone:tz,weekday:'long',month:'long',day:'numeric'});}
+
+function updateTimes(){
+  const t1=timezones[document.getElementById('tz1').value];
+  const t2=timezones[document.getElementById('tz2').value];
+  document.getElementById('tz1-time').textContent=getTime(t1.tz);
+  document.getElementById('tz1-date').textContent=getDate(t1.tz);
+  document.getElementById('tz1-city').textContent=t1.flag+' '+t1.city;
+  document.getElementById('tz2-time').textContent=getTime(t2.tz);
+  document.getElementById('tz2-date').textContent=getDate(t2.tz);
+  document.getElementById('tz2-city').textContent=t2.flag+' '+t2.city;
+  const offset1=new Date().toLocaleString('en-US',{timeZone:t1.tz,timeZoneName:'short'}).split(' ').pop();
+  const offset2=new Date().toLocaleString('en-US',{timeZone:t2.tz,timeZoneName:'short'}).split(' ').pop();
+  document.getElementById('tz-diff').textContent=`${t1.city} ${offset1} ↔ ${t2.city} ${offset2}`;
+}
+
+function convertCustomTime(){
+  const timeInput=document.getElementById('custom-time').value;
+  if(!timeInput) return;
+  const t1=timezones[document.getElementById('tz1').value];
+  const t2=timezones[document.getElementById('tz2').value];
+  const [h,m]=timeInput.split(':');
+  const baseDate=new Date();
+  baseDate.setHours(parseInt(h),parseInt(m),0,0);
+  const result2=new Date(baseDate).toLocaleTimeString('en-US',{timeZone:t2.tz,hour:'2-digit',minute:'2-digit',hour12:true});
+  document.getElementById('custom-result').innerHTML=`${timeInput} in ${t1.flag} ${t1.city} = <strong style="color:var(--blue)">${result2}</strong> in ${t2.flag} ${t2.city}`;
+}
+
+function renderWorldClock(){
+  document.getElementById('world-clock').innerHTML=timezones.slice(0,8).map(t=>`
+    <div class="card" style="text-align:center;padding:1rem">
+      <div style="font-size:1.3rem;margin-bottom:0.3rem">${t.flag}</div>
+      <div style="font-family:var(--font-head);font-size:0.85rem;font-weight:700;color:var(--text)">${t.city}</div>
+      <div style="font-family:var(--font-mono);font-size:1rem;font-weight:700;color:var(--blue);margin-top:0.3rem" id="wc-${t.city.replace(/\s/g,'_')}"></div>
+    </div>
+  `).join('');
+}
+
+function tickWorldClock(){
+  timezones.slice(0,8).forEach(t=>{
+    const el=document.getElementById('wc-'+t.city.replace(/\s/g,'_'));
+    if(el) el.textContent=new Date().toLocaleTimeString('en-US',{timeZone:t.tz,hour:'2-digit',minute:'2-digit',hour12:false});
+  });
+}
+
+updateTimes();renderWorldClock();tickWorldClock();
+setInterval(()=>{updateTimes();tickWorldClock();},1000);
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  buildNav('timezone');
+  buildFooter();
+});
+</script>
+</body></html>

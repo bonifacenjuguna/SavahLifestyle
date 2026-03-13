@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mood Tracker — SavahLifestyle</title>
+  <link rel="stylesheet" href="css/style.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <script src="js/app.js" defer></script>
+  <script src="js/localAuth.js" defer></script>
+<script src="js/nav.js" defer></script>
+  <style>
+    .mood-btn{width:58px;height:58px;border-radius:50%;border:3px solid transparent;background:var(--card);font-size:1.7rem;cursor:pointer;transition:var(--transition);display:flex;align-items:center;justify-content:center;}
+    .mood-btn:hover{transform:scale(1.12);}
+    .mood-btn.selected{border-color:var(--blue);transform:scale(1.18);box-shadow:0 0 16px var(--blue-glow);}
+    .mood-entry{display:flex;align-items:center;gap:.75rem;padding:.85rem 1rem;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:.5rem;transition:var(--transition);}
+    .mood-entry:hover{border-color:var(--border-accent);}
+    .tag-btn{padding:.3rem .7rem;border-radius:20px;font-size:.75rem;font-weight:600;border:1px solid var(--border);background:transparent;color:var(--text-muted);cursor:pointer;transition:var(--transition);}
+    .tag-btn.sel{border-color:var(--blue);color:var(--blue);background:var(--blue-dim);}
+  </style>
+</head>
+<body>
+<div id="page-loader"><div class="loader-logo"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>Savah<span>Lifestyle</span></div><div class="loader-bar-wrap"><div class="loader-bar"></div></div></div>
+<div class="page"><div class="container" style="padding-top:2rem;padding-bottom:3rem">
+  <div class="page-header">
+    <div><h1 class="page-title">Mood <span>Tracker</span></h1><p class="page-subtitle">Track your emotional wellbeing and spot patterns</p></div>
+    <a href="index.html" class="nav-back"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>Back</a>
+  </div>
+  <div class="grid-4" style="margin-bottom:2rem" id="mood-stats"></div>
+  <div class="grid-2" style="margin-bottom:2rem">
+    <div class="card card-p">
+      <div class="card-title" style="margin-bottom:1.25rem"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><circle cx="12" cy="12" r="10"/><path d="M8 13s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg> How are you feeling?</div>
+      <div style="display:flex;gap:.85rem;justify-content:center;flex-wrap:wrap;margin-bottom:1.25rem" id="mood-picker"></div>
+      <div id="mood-label" style="text-align:center;font-family:var(--font-head);font-size:1rem;font-weight:700;margin-bottom:1rem;color:var(--text-muted)">Select a mood above</div>
+      <div class="form-group"><label class="form-label">Tags (what's influencing your mood?)</label>
+        <div style="display:flex;gap:.45rem;flex-wrap:wrap;margin-top:.4rem" id="tag-picker"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Note (optional)</label>
+        <input type="text" class="form-input" id="mood-note" placeholder="What's on your mind?"/>
+      </div>
+      <button class="btn btn-primary" style="width:100%" onclick="logMood()">Log Mood</button>
+    </div>
+    <div class="card card-p">
+      <div class="card-title" style="margin-bottom:1rem"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> Mood — Last 14 Days</div>
+      <div style="height:230px"><canvas id="mood-chart"></canvas></div>
+    </div>
+  </div>
+  <div class="card card-p">
+    <div class="card-title" style="margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between">
+      History
+      <button class="btn btn-secondary btn-sm" onclick="if(confirm('Clear all?')){moodData=[];save();render();}" style="color:var(--danger)">Clear All</button>
+    </div>
+    <div id="mood-list"></div>
+  </div>
+</div></div>
+<script>
+const MOODS = [
+  {e:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><circle cx="12" cy="12" r="10"/><path d="M8 13s1.5 3 4 3 4-3 4-3"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>',l:'Excellent',v:5,c:'#22c55e'},{e:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><circle cx="12" cy="12" r="10"/><path d="M8 13s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>',l:'Good',v:4,c:'#3b82f6'},
+  {e:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><circle cx="12" cy="12" r="10"/><line x1="8" y1="15" x2="16" y2="15"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>',l:'Neutral',v:3,c:'#94a3b8'},{e:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>',l:'Low',v:2,c:'#f59e0b'},{e:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>',l:'Rough',v:1,c:'#ef4444'}
+];
+const TAGS = ['Work','Family','Health','Exercise','Sleep','Social','Food','Money','Weather','Personal'];
+let moodData = JSON.parse(localStorage.getItem('savah:moods')||'[]');
+let selMood = null, selTags = [];
+
+// Build mood picker
+document.getElementById('mood-picker').innerHTML = MOODS.map(m=>
+  `<button class="mood-btn" data-mood="${m.l}" title="${m.l}" onclick="selectMood('${m.l}')">${m.e}</button>`).join('');
+document.getElementById('tag-picker').innerHTML = TAGS.map(t=>
+  `<button class="tag-btn" data-tag="${t}" onclick="toggleTag('${t}',this)">${t}</button>`).join('');
+
+function selectMood(l){
+  selMood = MOODS.find(m=>m.l===l);
+  document.querySelectorAll('.mood-btn').forEach(b=>{b.classList.toggle('selected',b.dataset.mood===l);});
+  document.getElementById('mood-label').textContent = selMood.e + ' ' + selMood.l;
+  document.getElementById('mood-label').style.color = selMood.c;
+}
+function toggleTag(t,el){
+  if(selTags.includes(t)){selTags=selTags.filter(x=>x!==t);el.classList.remove('sel');}
+  else{selTags.push(t);el.classList.add('sel');}
+}
+function logMood(){
+  if(!selMood){Toast.show('Select a mood first','warning');return;}
+  const note=document.getElementById('mood-note').value.trim();
+  moodData.unshift({id:Date.now(),ts:new Date().toISOString(),mood:selMood.l,emoji:selMood.e,value:selMood.v,color:selMood.c,tags:[...selTags],note});
+  save();render();Toast.show('Mood logged','success');
+  document.getElementById('mood-note').value='';
+  selTags=[]; document.querySelectorAll('.tag-btn').forEach(b=>b.classList.remove('sel'));
+}
+function save(){localStorage.setItem('savah:moods',JSON.stringify(moodData));}
+function render(){
+  const avg=moodData.length?Math.round(moodData.reduce((s,e)=>s+e.value,0)/moodData.length*10)/10:0;
+  const todayCount=moodData.filter(m=>m.ts.startsWith(new Date().toISOString().split('T')[0])).length;
+  document.getElementById('mood-stats').innerHTML=[
+    {l:'Total Logs',v:moodData.length,c:'var(--blue)'},{l:'Avg Mood',v:avg+'/5',c:'var(--success)'},
+    {l:'Today',v:todayCount,c:'var(--purple)'},{l:'Best Streak',v:calcStreak()+' days',c:'var(--warning)'},
+  ].map(s=>`<div class="stat-card"><div><div class="stat-value" style="color:${s.c};font-size:1.4rem">${s.v}</div><div class="stat-label">${s.l}</div></div></div>`).join('');
+  // Chart
+  const last14=Array.from({length:14},(_,i)=>{const d=new Date();d.setDate(d.getDate()-(13-i));return d.toISOString().split('T')[0];});
+  const chartVals=last14.map(d=>{const entries=moodData.filter(m=>m.ts.startsWith(d));return entries.length?Math.round(entries.reduce((s,e)=>s+e.value,0)/entries.length*10)/10:null;});
+  const labels=last14.map(d=>new Date(d+'T00:00').toLocaleDateString('en',{weekday:'short',month:'numeric',day:'numeric'}));
+  if(window._mC)window._mC.destroy();
+  window._mC=new Chart(document.getElementById('mood-chart'),{type:'line',data:{labels,datasets:[{label:'Mood',data:chartVals,borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,0.1)',tension:0.4,fill:true,pointRadius:4,pointBackgroundColor:chartVals.map(v=>v?`hsl(${(v-1)*30},70%,55%)`:'#334155'),spanGaps:true}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#64748b',maxRotation:45},grid:{display:false}},y:{min:1,max:5,ticks:{color:'#64748b',stepSize:1,callback:v=>[,'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>','<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>','<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><circle cx="12" cy="12" r="10"/><line x1="8" y1="15" x2="16" y2="15"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>','<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><circle cx="12" cy="12" r="10"/><path d="M8 13s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>','<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px"><circle cx="12" cy="12" r="10"/><path d="M8 13s1.5 3 4 3 4-3 4-3"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>'][v]||v},grid:{color:'rgba(255,255,255,0.04)'}}}}});
+  if(!moodData.length){document.getElementById('mood-list').innerHTML=`<div class="empty-state"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg><h3>No moods logged</h3><p>Track how you feel above.</p></div>`;return;}
+  document.getElementById('mood-list').innerHTML=moodData.map(e=>`
+    <div class="mood-entry">
+      <div style="font-size:1.6rem">${e.emoji}</div>
+      <div style="flex:1">
+        <div style="font-weight:600;font-size:.9rem" style="color:${e.color}">${e.mood}${e.note?' — '+e.note:''}</div>
+        <div class="muted">${new Date(e.ts).toLocaleString()}${e.tags?.length?' · '+e.tags.join(', '):''}</div>
+      </div>
+      <button class="btn-icon btn" onclick="moodData=moodData.filter(m=>m.id!==${e.id});save();render()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg></button>
+    </div>`).join('');
+}
+function calcStreak(){
+  const dates=[...new Set(moodData.map(m=>m.ts.split('T')[0]))].sort((a,b)=>b.localeCompare(a));
+  let s=0,today=new Date();for(let i=0;i<dates.length;i++){const d=new Date(dates[i]+'T00:00');d.setDate(d.getDate()+1);if(Math.round((today-d)/86400000)===i)s++;else break;}return s;
+}
+render();
+document.addEventListener('DOMContentLoaded',()=>{buildNav();buildFooter();});
+</script>
+</body>
+</html>

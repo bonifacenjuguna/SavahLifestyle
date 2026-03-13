@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quick Calculators — SavahLifestyle</title>
+  <link rel="stylesheet" href="css/style.css"/>
+  <script src="js/app.js" defer></script>
+  <script src="js/localAuth.js" defer></script>
+<script src="js/nav.js" defer></script>
+  
+  
+  <style>
+    .calc-result-box { background:var(--blue-dim); border:1px solid var(--border-accent); border-radius:var(--radius-sm); padding:1rem; text-align:center; margin-top:1rem; }
+    .calc-result-value { font-family:var(--font-head); font-size:1.8rem; font-weight:800; color:var(--blue); }
+    .calc-result-label { font-size:0.78rem; color:var(--text-muted); margin-top:0.2rem; }
+  </style>
+</head>
+<body>
+<nav class="nav">
+  <a href="index.html" class="nav-logo"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>Savah<span>Lifestyle</span></a>
+  <div class="nav-actions">
+    <a href="index.html" class="nav-back"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg> <span>Dashboard</span></a>
+    <button class="theme-toggle" id="theme-toggle"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/></svg></button>
+  </div>
+</nav>
+<div class="page"><div class="container">
+  <div class="page-header"><div><h1 class="page-title">Quick <span>Calculators</span></h1><p class="page-subtitle">Fast specialized calculators for everyday needs</p></div></div>
+  <div class="grid-2">
+    <!-- Tip Calculator -->
+    <div class="card">
+      <div class="card-header"><div class="card-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg> Tip Calculator</div></div>
+      <div class="form-group"><label class="form-label">Bill Amount (KES)</label><input type="number" id="tip-bill" placeholder="1000" oninput="calcTip()" /></div>
+      <div class="form-group"><label class="form-label">Tip % — <span id="tip-pct-label">15%</span></label><input type="range" id="tip-pct" min="0" max="30" value="15" oninput="document.getElementById('tip-pct-label').textContent=this.value+'%';calcTip()" /></div>
+      <div class="form-group"><label class="form-label">Split Between</label><input type="number" id="tip-split" value="1" min="1" max="20" oninput="calcTip()" /></div>
+      <div class="calc-result-box" id="tip-result"><div class="calc-result-value">KES 0</div><div class="calc-result-label">Total per person</div></div>
+    </div>
+    <!-- Percentage Calculator -->
+    <div class="card">
+      <div class="card-header"><div class="card-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><circle cx="9" cy="9" r="2"/><circle cx="15" cy="15" r="2"/><line x1="5" y1="19" x2="19" y2="5"/></svg> Percentage</div></div>
+      <div class="tabs" style="margin-bottom:1rem">
+        <button class="tab active" onclick="setPctMode('of', this)">X% of Y</button>
+        <button class="tab" onclick="setPctMode('change', this)">% Change</button>
+        <button class="tab" onclick="setPctMode('is', this)">X is Y%</button>
+      </div>
+      <div id="pct-inputs"></div>
+      <div class="calc-result-box" id="pct-result"><div class="calc-result-value">0</div><div class="calc-result-label">Result</div></div>
+    </div>
+    <!-- Loan Calculator -->
+    <div class="card">
+      <div class="card-header"><div class="card-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3H8L2 7"/></svg> Loan Calculator</div></div>
+      <div class="form-group"><label class="form-label">Principal (KES)</label><input type="number" id="loan-principal" placeholder="100000" oninput="calcLoan()" /></div>
+      <div class="form-group"><label class="form-label">Annual Interest Rate (%)</label><input type="number" id="loan-rate" placeholder="12" step="0.1" oninput="calcLoan()" /></div>
+      <div class="form-group"><label class="form-label">Term (months)</label><input type="number" id="loan-months" placeholder="24" oninput="calcLoan()" /></div>
+      <div class="calc-result-box" id="loan-result"><div class="calc-result-value">KES 0</div><div class="calc-result-label">Monthly payment</div></div>
+      <div id="loan-extra" style="margin-top:0.75rem;font-size:0.8rem;color:var(--text-muted);display:none"></div>
+    </div>
+    <!-- Unit Converter -->
+    <div class="card">
+      <div class="card-header"><div class="card-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg> Unit Converter</div></div>
+      <div class="form-group"><label class="form-label">Category</label>
+        <select id="unit-cat" onchange="updateUnitOptions()">
+          <option value="length">Length</option><option value="weight">Weight / Mass</option>
+          <option value="temp">Temperature</option><option value="speed">Speed</option>
+          <option value="area">Area</option><option value="volume">Volume</option>
+          <option value="data">Data Storage</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:0.5rem;align-items:center">
+        <div style="flex:1"><label class="form-label">From</label><input type="number" id="unit-from-val" placeholder="1" oninput="convertUnit()" /></div>
+        <select id="unit-from" style="flex:1;margin-top:1.2rem" onchange="convertUnit()"></select>
+        <div style="color:var(--blue);margin-top:1.2rem;padding:0 0.25rem">→</div>
+        <select id="unit-to" style="flex:1;margin-top:1.2rem" onchange="convertUnit()"></select>
+      </div>
+      <div class="calc-result-box" id="unit-result" style="margin-top:0.75rem"><div class="calc-result-value" id="unit-result-val">0</div><div class="calc-result-label" id="unit-result-label">Result</div></div>
+    </div>
+    <!-- BMI Calculator -->
+    <div class="card">
+      <div class="card-header"><div class="card-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 000-7.78z"/></svg> BMI Calculator</div></div>
+      <div class="form-group"><label class="form-label">Weight (kg)</label><input type="number" id="bmi-weight" placeholder="70" oninput="calcBMI()" /></div>
+      <div class="form-group"><label class="form-label">Height (cm)</label><input type="number" id="bmi-height" placeholder="175" oninput="calcBMI()" /></div>
+      <div class="calc-result-box" id="bmi-result"><div class="calc-result-value">—</div><div class="calc-result-label">BMI Category</div></div>
+    </div>
+    <!-- Age Calculator -->
+    <div class="card">
+      <div class="card-header"><div class="card-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Age Calculator</div></div>
+      <div class="form-group"><label class="form-label">Date of Birth</label><input type="date" id="dob" onchange="calcAge()" /></div>
+      <div class="calc-result-box" id="age-result"><div class="calc-result-value">—</div><div class="calc-result-label">Your Age</div></div>
+      <div id="age-extra" style="margin-top:0.75rem;font-size:0.82rem;color:var(--text-muted)"></div>
+    </div>
+  </div>
+</div></div>
+<script>
+// Tip
+function calcTip() {
+  const bill = parseFloat(document.getElementById('tip-bill').value)||0;
+  const pct = parseFloat(document.getElementById('tip-pct').value)||0;
+  const split = parseInt(document.getElementById('tip-split').value)||1;
+  const tip = bill * pct / 100;
+  const total = (bill + tip) / split;
+  document.getElementById('tip-result').innerHTML = `<div class="calc-result-value">KES ${total.toLocaleString(undefined,{maximumFractionDigits:0})}</div><div class="calc-result-label">Tip: KES ${tip.toLocaleString(undefined,{maximumFractionDigits:0})} · Total: KES ${(bill+tip).toLocaleString(undefined,{maximumFractionDigits:0})}</div>`;
+}
+
+// Percentage modes
+let pctMode = 'of';
+function setPctMode(m, btn) {
+  pctMode = m;
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
+  const inputs = document.getElementById('pct-inputs');
+  if(m==='of') inputs.innerHTML = '<div class="form-group"><label class="form-label">Percentage</label><input type="number" id="p1" placeholder="15" oninput="calcPct()" /></div><div class="form-group"><label class="form-label">Of Number</label><input type="number" id="p2" placeholder="200" oninput="calcPct()" /></div>';
+  else if(m==='change') inputs.innerHTML = '<div class="form-group"><label class="form-label">From</label><input type="number" id="p1" placeholder="100" oninput="calcPct()" /></div><div class="form-group"><label class="form-label">To</label><input type="number" id="p2" placeholder="120" oninput="calcPct()" /></div>';
+  else inputs.innerHTML = '<div class="form-group"><label class="form-label">Number (X)</label><input type="number" id="p1" placeholder="30" oninput="calcPct()" /></div><div class="form-group"><label class="form-label">Percent (Y%)</label><input type="number" id="p2" placeholder="25" oninput="calcPct()" /></div>';
+  calcPct();
+}
+function calcPct() {
+  const p1=parseFloat(document.getElementById('p1')?.value)||0, p2=parseFloat(document.getElementById('p2')?.value)||0;
+  let result,label;
+  if(pctMode==='of') { result=(p1/100)*p2; label=`${p1}% of ${p2}`; }
+  else if(pctMode==='change') { result=p1?((p2-p1)/p1*100).toFixed(2):0; label=result>0?'Increase':'Decrease'; }
+  else { result=p2?((p1/p2)*100).toFixed(2):0; label=`${p1} is ${result}% of ${p2}`; }
+  document.getElementById('pct-result').innerHTML = `<div class="calc-result-value">${typeof result==='number'?result.toLocaleString(undefined,{maximumFractionDigits:4}):result}</div><div class="calc-result-label">${label}</div>`;
+}
+setPctMode('of', document.querySelector('.tab.active'));
+
+// Loan
+function calcLoan() {
+  const P=parseFloat(document.getElementById('loan-principal').value)||0;
+  const r=parseFloat(document.getElementById('loan-rate').value)||0;
+  const n=parseInt(document.getElementById('loan-months').value)||0;
+  if(!P||!r||!n) return;
+  const monthly_r = r/(100*12);
+  const monthly = P * (monthly_r * Math.pow(1+monthly_r,n)) / (Math.pow(1+monthly_r,n)-1);
+  const total = monthly * n;
+  const interest = total - P;
+  document.getElementById('loan-result').innerHTML = `<div class="calc-result-value">KES ${Math.round(monthly).toLocaleString()}</div><div class="calc-result-label">Monthly payment</div>`;
+  const extra = document.getElementById('loan-extra');
+  extra.style.display='block';
+  extra.innerHTML = `Total repayment: <strong style="color:var(--blue)">KES ${Math.round(total).toLocaleString()}</strong> · Total interest: <strong style="color:var(--danger)">KES ${Math.round(interest).toLocaleString()}</strong>`;
+}
+
+// Unit Converter
+const units = {
+  length: { m:'Meters', km:'Kilometers', mi:'Miles', ft:'Feet', in:'Inches', cm:'Centimeters', mm:'Millimeters', yd:'Yards' },
+  weight: { kg:'Kilograms', g:'Grams', lb:'Pounds', oz:'Ounces', t:'Metric Tons', mg:'Milligrams' },
+  temp: { c:'Celsius', f:'Fahrenheit', k:'Kelvin' },
+  speed: { kph:'km/h', mph:'mph', ms:'m/s', kn:'Knots' },
+  area: { m2:'m²', km2:'km²', ha:'Hectares', ac:'Acres', ft2:'ft²' },
+  volume: { l:'Liters', ml:'Milliliters', gal:'Gallons (US)', pt:'Pints', fl_oz:'Fl Oz' },
+  data: { b:'Bytes', kb:'Kilobytes', mb:'Megabytes', gb:'Gigabytes', tb:'Terabytes' }
+};
+const toBase = { m:1,km:1000,mi:1609.34,ft:0.3048,in:0.0254,cm:0.01,mm:0.001,yd:0.9144, kg:1,g:0.001,lb:0.453592,oz:0.0283495,t:1000,mg:0.000001, kph:1,mph:1.60934,ms:3.6,kn:1.852, m2:1,km2:1e6,ha:10000,ac:4046.86,ft2:0.092903, l:1,ml:0.001,gal:3.78541,pt:0.473176,fl_oz:0.0295735, b:1,kb:1024,mb:1048576,gb:1073741824,tb:1099511627776 };
+function updateUnitOptions() {
+  const cat = document.getElementById('unit-cat').value;
+  const opts = Object.entries(units[cat]).map(([k,v])=>`<option value="${k}">${v}</option>`).join('');
+  document.getElementById('unit-from').innerHTML = opts;
+  document.getElementById('unit-to').innerHTML = opts;
+  document.getElementById('unit-to').selectedIndex = 1;
+  convertUnit();
+}
+function convertUnit() {
+  const cat = document.getElementById('unit-cat').value;
+  const val = parseFloat(document.getElementById('unit-from-val').value)||0;
+  const from = document.getElementById('unit-from').value;
+  const to = document.getElementById('unit-to').value;
+  let result;
+  if(cat==='temp') {
+    if(from==='c'&&to==='f') result=val*9/5+32;
+    else if(from==='f'&&to==='c') result=(val-32)*5/9;
+    else if(from==='c'&&to==='k') result=val+273.15;
+    else if(from==='k'&&to==='c') result=val-273.15;
+    else if(from==='f'&&to==='k') result=(val-32)*5/9+273.15;
+    else if(from==='k'&&to==='f') result=(val-273.15)*9/5+32;
+    else result=val;
+  } else { result = val * toBase[from] / toBase[to]; }
+  const label = `${val} ${units[cat][from]} = ... ${units[cat][to]}`;
+  document.getElementById('unit-result-val').textContent = parseFloat(result.toPrecision(8));
+  document.getElementById('unit-result-label').textContent = `${units[cat][from]} → ${units[cat][to]}`;
+}
+updateUnitOptions();
+
+// BMI
+function calcBMI() {
+  const w=parseFloat(document.getElementById('bmi-weight').value)||0, h=parseFloat(document.getElementById('bmi-height').value)||0;
+  if(!w||!h) return;
+  const bmi = w / ((h/100)**2);
+  let cat,color;
+  if(bmi<18.5) { cat='Underweight'; color='#60a5fa'; }
+  else if(bmi<25) { cat='Normal weight'; color='var(--success)'; }
+  else if(bmi<30) { cat='Overweight'; color='var(--warning)'; }
+  else { cat='Obese'; color='var(--danger)'; }
+  document.getElementById('bmi-result').innerHTML = `<div class="calc-result-value" style="color:${color}">${bmi.toFixed(1)}</div><div class="calc-result-label" style="color:${color}">${cat}</div>`;
+}
+
+// Age
+function calcAge() {
+  const dob = new Date(document.getElementById('dob').value);
+  if(!dob.getTime()) return;
+  const now = new Date();
+  let years = now.getFullYear()-dob.getFullYear();
+  let months = now.getMonth()-dob.getMonth();
+  let days = now.getDate()-dob.getDate();
+  if(days<0) { months--; days+=30; }
+  if(months<0) { years--; months+=12; }
+  const nextBday = new Date(now.getFullYear(), dob.getMonth(), dob.getDate());
+  if(nextBday < now) nextBday.setFullYear(now.getFullYear()+1);
+  const daysUntil = Math.ceil((nextBday-now)/(86400000));
+  document.getElementById('age-result').innerHTML = `<div class="calc-result-value">${years}</div><div class="calc-result-label">${years} years, ${months} months, ${days} days</div>`;
+  document.getElementById('age-extra').textContent = daysUntil < 365 ? `🎂 Next birthday in ${daysUntil} days!` : '';
+}
+</script>
+</body></html>

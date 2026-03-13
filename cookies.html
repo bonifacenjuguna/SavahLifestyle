@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Cookie Policy — SavahLifestyle</title>
+  <link rel="stylesheet" href="css/style.css"/>
+  <script src="js/app.js" defer></script>
+  <script src="js/localAuth.js" defer></script>
+<script src="js/nav.js" defer></script>
+  <style>.policy-content h2 { font-family:var(--font-head); font-size:1.1rem; font-weight:700; margin:2rem 0 .75rem; color:var(--blue); } .policy-content p,.policy-content li { font-size:.9rem; color:var(--text-muted); margin-bottom:.9rem; line-height:1.75; }</style>
+</head>
+<body>
+<div id="page-loader"><div class="loader-logo"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>Savah<span>Lifestyle</span></div><div class="loader-bar-wrap"><div class="loader-bar"></div></div></div>
+<div class="page"><div class="container-sm" style="padding-top:2rem;padding-bottom:4rem">
+  <div class="page-header">
+    <div><h1 class="page-title">Cookie <span>Policy</span></h1><p class="page-subtitle">Last updated: January 2025</p></div>
+    <a href="index.html" class="nav-back"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>Back</a>
+  </div>
+  <div class="card card-p policy-content">
+    <p>SavahLifestyle uses localStorage (browser storage) rather than traditional cookies. Here's what we store and why.</p>
+    <h2>What We Store</h2>
+    <ul>
+      <li><strong>sl:token</strong> — Your JWT authentication token to keep you logged in</li>
+      <li><strong>sl:user</strong> — Your cached profile data (name, email, role)</li>
+      <li><strong>sl:theme</strong> — Your dark/light mode preference</li>
+      <li><strong>sl:notifs</strong> — Your notification history</li>
+      <li><strong>sl:*</strong> — Various app data (todos, habits, etc.) cached locally for speed</li>
+    </ul>
+    <h2>Third-Party Storage</h2>
+    <p>If you sign in with Google or Facebook, those services may set their own cookies per their respective privacy policies.</p>
+    <h2>How to Clear</h2>
+    <p>You can clear all stored data by going to your browser's developer tools → Application → Local Storage and clearing all entries for this site, or by signing out.</p>
+  </div>
+</div></div>
+<script>document.addEventListener('DOMContentLoaded', () => { buildNav(); buildFooter(); });</script>
+</body>
+</html>
